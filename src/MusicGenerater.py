@@ -4,6 +4,13 @@ from audiocraft.data.audio import audio_write
 
 class MusicGenerater:
     
+    """
+    the methods in this class is implemented accoding to MusicGen.
+    please refer to: 
+    https://github.com/facebookresearch/audiocraft/blob/main/docs/MUSICGEN.md
+    for more information
+    """
+    
     def __init__ (self, prompt):
         self.prompt = prompt
     
