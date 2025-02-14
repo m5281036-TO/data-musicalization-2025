@@ -23,7 +23,6 @@ class FileLoader:
             # load file
             self.loaded_data = pd.read_csv(self.file_path)
             print(f"File loaded successfully: {self.file_path} ")
-            self.size = loaded_data.shape # store size of data
             return self.loaded_data
             
         # error catch
