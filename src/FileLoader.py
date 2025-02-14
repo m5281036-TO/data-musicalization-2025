@@ -22,7 +22,7 @@ class FileLoader:
                 
             # load file
             loaded_data = pd.read_csv(self.file_path)
-            print("File loaded successfully.")
+            print(f"File: {self.file_path} loaded successfully.")
             return loaded_data
             
         # error catch
