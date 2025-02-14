@@ -60,8 +60,8 @@ class ConvertElementToAspect:
         element_zscores = self.get_zscores(element_data) # convert each value in data segment to zscore
         
         normalized_element = self.get_normalized_values(element_zscores, self.__class__.VALENCE_MAX, self.__class__.VALENCE_MIN) # normalize all z scores into [-100, 100]
-        rounded_element = self.round_with_interval(normalized_element, self.__class__.VALENCE_INTERVAL) # fit all normalized values to intervals
-        return rounded_element
+        self.normalized_valence = self.round_with_interval(normalized_element, self.__class__.VALENCE_INTERVAL) # fit all normalized values to intervals
+        return self.normalized_valence
     
     
     def convert_element_to_arousal(self, element_name):
@@ -70,7 +70,15 @@ class ConvertElementToAspect:
         element_zscores = self.get_zscores(element_data) # convert each value in data segment to zscore
         
         normalized_element = self.get_normalized_values(element_zscores, self.__class__.AROUSAL_MAX, self.__class__.AROUSAL_MIN) # normalize all z scores into [0, 100]
-        rounded_element = self.round_with_interval(normalized_element, self.__class__.AROUSAL_INTERVAL) # fit all normalized values to intervals
-        return rounded_element
+        self.normalized_arousal = self.round_with_interval(normalized_element, self.__class__.AROUSAL_INTERVAL) # fit all normalized values to intervals
+        return self.normalized_arousal
 
     
+    # ========================================
+    # generate text-based prompt from converted values in musical aspect
+    # ========================================
+    # TODO: make it accept several genres
+    
+    def get_prompt_text (self):
+        prompt_text_array = [f"Electronic music, {self.normalized_valence[i]}% of valence, and {self.normalized_arousal[i]}% of arousal"for i in range(10)]
+        return prompt_text_array
