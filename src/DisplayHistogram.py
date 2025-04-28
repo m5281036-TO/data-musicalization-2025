@@ -14,9 +14,8 @@ class DisplayHistogram:
     def display(self):
         
         data_list = {
-            'Temperature': self.data['temperature'],
-            'Precipitation': self.data['precipitation'],
-            'Sunlight': self.data['sunlight']
+            'sunlight': self.data['sunlight'],
+            'temperature': self.data['temperature'],
         }
 
         for key in data_list:
