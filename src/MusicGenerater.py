@@ -16,10 +16,12 @@ class MusicGenerater:
     https://github.com/facebookresearch/audiocraft/blob/main/docs/MUSICGEN.md
     for more information
     """
+    
     MODEL_HEADER = 'facebook/musicgen-'
     
-    def __init__ (self, model_size):
+    def __init__ (self, model_size, duration_in_s=5):
         self.model_name = self.MODEL_HEADER + model_size
+        self.duration_in_s = duration_in_s
     
     
     def set_model (self):
@@ -27,6 +29,7 @@ class MusicGenerater:
         self.processor = AutoProcessor.from_pretrained(model_name)
         self.model = MusicgenForConditionalGeneration.from_pretrained(model_name)
         self.sampling_rate = self.model.config.audio_encoder.sampling_rate
+        self.audio_length_sample = self.duration_in_s * self.model.config.audio_encoder.frame_rate
         print(f"MusicGen model is set to {model_name}")
         
         
@@ -58,7 +61,8 @@ class MusicGenerater:
                 padding=True,
                 return_tensors="pt",
             )
-            self.audio_values = self.model.generate(**inputs, max_new_tokens=256)
+            print(f"duration========{self.audio_length_sample}")
+            self.audio_values = self.model.generate(**inputs, max_new_tokens=self.audio_length_sample)
             
             # set audio playable in notebook
             Audio(self.audio_values[0].numpy(), rate=self.sampling_rate)
