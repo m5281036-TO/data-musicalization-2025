@@ -1,14 +1,17 @@
 from mido import Message, MidiFile, MidiTrack
 import numpy as np
 from scipy.io.wavfile import write
+import random
 
 class CreateChordsAndMelody:
     
     def __init__(self, sample_rate=44100):
         self.sample_rate = sample_rate
+        self.activate1 = 0
+        self.activate2 = 0
 
 
-    def create_modeset():
+    def create_modeset(self):
         CHORD_LIST = np.array([[60,  64,  55,  59],
                 [62,  65,  57,  60],
                 [64,  55,  59,  62],
@@ -65,27 +68,32 @@ class CreateChordsAndMelody:
         return MODESET
 
 
-    def create_activation_and_brightness(roughness, voicing):
+    def create_activation_and_brightness(self, roughness, voicing):
         # create roughness (activate1)
-        activate1 = np.random.rand(8)
-        activate1 = np.where(activate1 < roughness, 0, 1)
+        self.activate1 = np.random.rand(8)
+        self.activate1 = np.where(self.activate1 < roughness, 0, 1)
 
         # create roughness (activate2)
-        activate2 = np.random.rand(8)
-        activate2 = np.where(activate2 < roughness, 0, 1)
+        self.activate2 = np.random.rand(8)
+        self.activate2 = np.where(self.activate2 < roughness, 0, 1)
 
-        # create brightness
-        bright = np.random.rand(6)
-        if voicing < 0.5:
-            bright = np.where(bright > voicing * 2, -1, 0)
-        else:
-            bright = np.where(bright < (voicing - 0.5) * 2, 1, 0)
+        self.bright = np.random.rand(6)
+        self.bright_adjusted = []
 
-        return activate1, activate2, bright
+        for val in self.bright:
+            if voicing < 0.5:
+                if val > voicing * 2:
+                    self.bright_adjusted.append(-1)
+                else:
+                    self.bright_adjusted.append(0)
+            else:
+                if val < (voicing - 0.5) * 2:
+                    self.bright_adjusted.append(1)
+                else:
+                    self.bright_adjusted.append(0)
 
 
-
-    def create_midi(modeset, filename='./test_data/output/output.mid', tempo=500000):
+    def create_midi(self, modeset, filename='../data/output/chords.mid', tempo=500000):
         mid = MidiFile()
         track = MidiTrack()
         mid.tracks.append(track)
@@ -100,12 +108,15 @@ class CreateChordsAndMelody:
         voicing = valence
         loudness = (round(arousal*10))/10*40+60
         
+        self.create_activation_and_brightness(roughness, voicing)
+        
         duration = 1
         seq = 0
         # create chord
         for seq in range(4): # create 4 bar loop
             chord = modeset[seq, :, mode]
             print(f"seq {seq}: chord === {chord}")
+            # chord,1,mode)+bright(1)*12
             
             # play all note in chord
             i = 0
@@ -146,14 +157,8 @@ class CreateChordsAndMelody:
 
 
 
-    # main
-    modeset = create_modeset()
-    create_midi(modeset)
-    
-
-    # # Cメジャースケール
-    # melody = [(60, 0.5), (62, 0.5), (64, 0.5), (65, 0.5), (67, 1.0)]
-
-
-
-    # midi_to_wav()
+# main
+c = CreateChordsAndMelody()
+modeset = c.create_modeset()
+c.create_midi(modeset)
+# midi_to_wav()
