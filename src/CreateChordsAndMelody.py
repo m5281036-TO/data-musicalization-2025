@@ -5,6 +5,8 @@ import random
 
 class CreateChordsAndMelody:
     
+    BARS_TO_EACH_POINT = 4 # create 4 bar melodies for each data point
+    
     def __init__(self, sample_rate=44100):
         self.sample_rate = sample_rate
         self.activate1 = 0
@@ -93,41 +95,45 @@ class CreateChordsAndMelody:
                     self.bright_adjusted.append(0)
 
 
-    def create_midi(self, modeset, filename='../data/output/chords.mid', tempo=500000):
+    def create_midi(self, modeset, valence, arousal, filename='../data/output/chords.mid', tempo=500000):
         mid = MidiFile()
         track = MidiTrack()
         mid.tracks.append(track)
         track.append(Message('program_change', program=0, time=0))
-        
-        valence = 0.5
-        arousal = 0.5
 
-        mode = 7-round(valence*6)
-        roughness = 1-arousal
-        velocity = arousal
-        voicing = valence
-        loudness = (round(arousal*10))/10*40+60
-        
-        self.create_activation_and_brightness(roughness, voicing)
-        
-        duration = 1
-        seq = 0
-        # create chord
-        for seq in range(4): # create 4 bar loop
-            chord = modeset[seq, :, mode]
-            print(f"seq {seq}: chord === {chord}")
-            # chord,1,mode)+bright(1)*12
+        for valence, arousal in zip(valence_array, arousal_array):
+            print(f"\nvalence: {valence}, arousal: {arousal}")
+            mode = 7-round(valence*6)
+            roughness = 1-arousal
+            velocity = arousal
+            voicing = valence
+            loudness = (round(arousal*10))/10*40+60
             
-            # play all note in chord
-            i = 0
-            for note in chord:
-                track.append(Message('note_on', note=round(note), velocity=64, time=0))
+            self.create_activation_and_brightness(roughness, voicing)
             
-            # note off
-            time_ticks = int(mid.ticks_per_beat * duration)
-            track.append(Message('note_off', note=round(chord[0]), velocity=64, time=time_ticks)) # for 1st note in chord
-            for note in chord[1:]: # from 2nd to last note in chord
-                track.append(Message('note_off', note=round(note), velocity=64, time=0))
+            duration = 1
+            seq = 0
+            # randomly create tone
+            for seq in range(self.BARS_TO_EACH_POINT):
+                chord = []
+                print(f"seq {seq}: chord === {modeset[seq, :, mode]}")
+                for i in range(1, 4):
+                    note = modeset[seq, i, mode] + self.bright_adjusted[i] * 12
+                    chord.append(note)
+                print(f"chord new === {chord}")
+                
+                # play chord
+                for note in chord:
+                    track.append(Message('note_on', note=round(note), velocity=64, time=0))
+                                
+                # note off
+                time_ticks = int(mid.ticks_per_beat * duration)
+                track.append(Message('note_off', note=round(chord[0]), velocity=64, time=time_ticks)) # for 1st note in chord
+                for note in chord[1:]: # from 2nd to last note in chord
+                    track.append(Message('note_off', note=round(note), velocity=64, time=0))
+
+        
+
 
         mid.save(filename)
         print(f"MIDI saved as {filename}")
@@ -158,7 +164,9 @@ class CreateChordsAndMelody:
 
 
 # main
+valence_array = [0.2, 0.4, 1]
+arousal_array = [0.2, 0.4, 1]
 c = CreateChordsAndMelody()
 modeset = c.create_modeset()
-c.create_midi(modeset)
+c.create_midi(modeset,valence_array,arousal_array)
 # midi_to_wav()
