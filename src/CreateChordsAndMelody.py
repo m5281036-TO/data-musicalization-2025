@@ -2,12 +2,15 @@ from mido import Message, MidiFile, MidiTrack
 import numpy as np
 from scipy.io.wavfile import write
 import random
+import time
 
 class CreateChordsAndMelody:
     
     BARS_TO_EACH_POINT = 4 # create 4 bar melodies for each data point
+    MIN_LOUDNESS = 50 # set minimal loudness
+    DEFAULT_SAMPLE_RATE = 44100
     
-    def __init__(self, sample_rate=44100):
+    def __init__(self, sample_rate=DEFAULT_SAMPLE_RATE):
         self.sample_rate = sample_rate
         self.activate1 = 0
         self.activate2 = 0
@@ -95,48 +98,65 @@ class CreateChordsAndMelody:
                     self.bright_adjusted.append(0)
 
 
-    def create_midi(self, modeset, valence, arousal, filename='../data/output/chords.mid', tempo=500000):
+    def create_midi(self, modeset, valence_array, arousal_array, filename='../data/output/chords.mid', tempo=500000):
         mid = MidiFile()
         track = MidiTrack()
         mid.tracks.append(track)
-        track.append(Message('program_change', program=0, time=0))
-
-        for valence, arousal in zip(valence_array, arousal_array):
-            print(f"\nvalence: {valence}, arousal: {arousal}")
-            mode = 7-round(valence*6)
-            roughness = 1-arousal
-            velocity = arousal
-            voicing = valence
-            loudness = (round(arousal*10))/10*40+60
-            
-            self.create_activation_and_brightness(roughness, voicing)
-            
-            duration = 1
-            seq = 0
-            # randomly create tone
-            for seq in range(self.BARS_TO_EACH_POINT):
-                chord = []
-                print(f"seq {seq}: chord === {modeset[seq, :, mode]}")
-                for i in range(1, 4):
-                    note = modeset[seq, i, mode] + self.bright_adjusted[i] * 12
-                    chord.append(note)
-                print(f"chord new === {chord}")
-                
-                # play chord
-                for note in chord:
-                    track.append(Message('note_on', note=round(note), velocity=64, time=0))
-                                
-                # note off
-                time_ticks = int(mid.ticks_per_beat * duration)
-                track.append(Message('note_off', note=round(chord[0]), velocity=64, time=time_ticks)) # for 1st note in chord
-                for note in chord[1:]: # from 2nd to last note in chord
-                    track.append(Message('note_off', note=round(note), velocity=64, time=0))
-
         
+        for idx in range(len(valence_array)):
+            for seq in range(4):
+                print(f"idx === {idx}, seq === {seq}")
+                valence = valence_array[idx]
+                arousal = arousal_array[idx]
 
+                mode = 7 - round(valence * 6)
+                roughness = 1 - arousal
+                velocity = arousal
+                voicing = valence
+                loudness = round(arousal * 10) / 10 * 40 + 60
+
+                activate1 = np.where(np.random.rand(8) < roughness, 0, 1)
+                activate2 = np.where(np.random.rand(8) < roughness, 0, 1)
+
+                bright = np.zeros(6)
+                for i in range(6):
+                    if voicing < 0.5:
+                        bright[i] = -1 if np.random.rand() > voicing * 2 else 0
+                    else:
+                        bright[i] = 1 if np.random.rand() < (voicing - 0.5) * 2 else 0
+
+                # --- generate notes for chords --- #
+                for i in range(3):
+                    note = int(modeset[seq, i + 1, mode] + bright[i] * 12)
+                    vel = random.randint(self.MIN_LOUDNESS, int(loudness))
+                    track.append(Message('note_on', channel=0, note=note, velocity=vel, time=0))
+
+                # --- generate notes for bass --- #
+                base_note = int(modeset[seq, 1, mode] - (12 if voicing > 0.5 else 24))
+                vel = random.randint(self.MIN_LOUDNESS, int(loudness))
+                track.append(Message('note_on', channel=0, note=base_note, velocity=vel, time=0))
+
+                # --- generate notes for tone (melody) --- #
+                for tone in range(8):
+                    delay = int((0.3 - velocity * 0.15) * mid.ticks_per_beat)
+
+                    if activate1[tone] == 1:
+                        note = int(modeset[seq, 1, mode] + bright[4] * 12)
+                        vel = random.randint(self.MIN_LOUDNESS, int(loudness))
+                        track.append(Message('note_on', channel=0, note=note, velocity=vel, time=0))
+                        track.append(Message('note_off', channel=0, note=note, velocity=vel, time=delay))
+
+                    if activate2[tone] == 1:
+                        idx2 = np.random.randint(2, 4)
+                        note = int(modeset[seq, idx2, mode] + bright[5] * 12)
+                        vel = random.randint(self.MIN_LOUDNESS, int(loudness))
+                        track.append(Message('note_on', channel=0, note=note, velocity=vel, time=0))
+                        track.append(Message('note_off', channel=0, note=note, velocity=vel, time=delay))
+
+            idx += 1
 
         mid.save(filename)
-        print(f"MIDI saved as {filename}")
+
 
 
     def midi_to_wav(midi_path='./test_data/output/output.mid', wav_path='output.wav'):
