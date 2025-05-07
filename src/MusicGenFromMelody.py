@@ -1,6 +1,8 @@
 import torchaudio
 from audiocraft.models import MusicGen
 from audiocraft.data.audio import audio_write
+import shutil
+import os
 
 
 class MusicGenFromMelody:
@@ -10,21 +12,24 @@ class MusicGenFromMelody:
     
     """
     
-    def __init__ (self, duration=8):
+    def __init__ (self, output_dir, duration=8):
+        os.environ["PATH"] += os.pathsep + '/opt/homebrew/bin/ffmpeg'
+        print(shutil.which("ffmpeg"))  # if None, ffmpeg do not found
+        self.output_dir = output_dir
         self.duration = duration
         
     
-    def music_gen_from_melody (self, melody_path, prompt):
-        print(f"Generating melody from prompt: {prompt}")
-        model = MusicGen.get_pretrained('facebook/musicgen-melody')
-        model.set_generation_params(duration=self.duration)  # set duration
-        wav = model.generate([prompt])  # generate from discrption
+    def music_gen_from_melody (self, melody_path, description, idx):
+        print(f"-------- Generating --------\nprompt: {description}\nmelody: {melody_path}\n")
+
+        model = MusicGen.get_pretrained('melody')
+        model.set_generation_params(duration=self.duration)
 
         melody, sr = torchaudio.load(melody_path)
         # generates using the melody from the given audio and the provided descriptions.
-        wav = model.generate_with_chroma(prompt, melody[None].expand(3, -1, -1), sr)
+        wav = model.generate_with_chroma([description], melody, sr)
 
-        for idx, one_wav in enumerate(wav):
-            # Will save under {idx}.wav, with loudness normalization at -14 db LUFS.
-            audio_write(f'{idx}', one_wav.cpu(), model.sample_rate, strategy="loudness", loudness_compressor=True)
-            
+        # loudness normalization at -14 db LUFS.
+        audio_path = os.path.join(self.output_dir, f"{idx}.wav")
+        audio_write(f'{audio_path}', wav.cpu(), model.sample_rate, strategy="loudness")
+
