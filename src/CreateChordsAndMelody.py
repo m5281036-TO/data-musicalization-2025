@@ -19,7 +19,7 @@ class CreateChordsAndMelody:
         self.output_dir = os.path.join(f"../data/output", timestamp)
 
 
-    def create_midi(self, valence_array, arousal_array):
+    def create_midi_and_wav(self, valence_array, arousal_array):
         def create_modeset():
             CHORD_LIST = np.array([[60,  64,  55,  59],
                     [62,  65,  57,  60],
@@ -144,38 +144,42 @@ class CreateChordsAndMelody:
             print(f"MIDI file saved: {midi_path}")
 
 
-        def midi_to_wav(self, midi_path):
-            mid = MidiFile(midi_path)
+            def midi_to_wav(midi_path):
+                mid = MidiFile(midi_path)
+                
+                time = 0.0
+                audio = np.zeros(int(mid.length * self.sample_rate))
+
+                for msg in mid.play():
+                    time += msg.time
+                    if msg.type == 'note_on' and msg.velocity > 0:
+                        duration = 0.5  # 固定長
+                        start_sample = int(time * self.sample_rate)
+                        end_sample = int((time + duration) * self.sample_rate)
+
+                        # end_sampleがaudioの長さを超えないように調整
+                        if end_sample > len(audio):
+                            end_sample = len(audio)
+                        
+                        # 波形の長さを調整
+                        wave_duration = end_sample - start_sample
+                        t = np.linspace(0, duration, wave_duration, False)
+                        freq = 440.0 * 2 ** ((msg.note - 69) / 12.0)
+                        wave = 0.2 * np.sin(2 * np.pi * freq * t)
+
+                        # 波形の長さが一致するように調整
+                        if len(wave) < wave_duration:
+                            wave = np.pad(wave, (0, wave_duration - len(wave)))
+
+                        audio[start_sample:end_sample] += wave
+
+                # 正規化
+                audio = np.int16(audio / np.max(np.abs(audio)) * 32767)
+                wave_path = os.path.join(self.output_dir, f"melody_{idx+1}_val{valence_array[idx]}_aro{arousal_array[idx]}.wav")
+                write(wave_path, self.sample_rate, audio)
+                print(f"WAV file saved as {wave_path}")
+                
+            midi_to_wav(midi_path)
             
-            time = 0.0
-            audio = np.zeros(int(mid.length * self.sample_rate))
-
-            for msg in mid.play():
-                time += msg.time
-                if msg.type == 'note_on' and msg.velocity > 0:
-                    duration = 0.5  # 固定長
-                    start_sample = int(time * self.sample_rate)
-                    end_sample = int((time + duration) * self.sample_rate)
-
-                    # end_sampleがaudioの長さを超えないように調整
-                    if end_sample > len(audio):
-                        end_sample = len(audio)
-                    
-                    # 波形の長さを調整
-                    wave_duration = end_sample - start_sample
-                    t = np.linspace(0, duration, wave_duration, False)
-                    freq = 440.0 * 2 ** ((msg.note - 69) / 12.0)
-                    wave = 0.2 * np.sin(2 * np.pi * freq * t)
-
-                    # 波形の長さが一致するように調整
-                    if len(wave) < wave_duration:
-                        wave = np.pad(wave, (0, wave_duration - len(wave)))
-
-                    audio[start_sample:end_sample] += wave
-
-            # 正規化
-            audio = np.int16(audio / np.max(np.abs(audio)) * 32767)
-            wave_path = os.path.join(self.output_dir, f"melody_{idx+1}_val{valence_array[idx]}_aro{arousal_array[idx]}.wav")
-            write(wave_path, self.sample_rate, audio)
-            print(f"WAV saved as {wave_path}")
-            
+    def get_output_directory_path (self):
+        return self.output_dir
