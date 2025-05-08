@@ -22,11 +22,10 @@ class MusicGenFromMelody:
         
         self.model = MusicGen.get_pretrained('melody')
         self.model.set_generation_params(duration=duration)
-    
         
     
-    def music_gen_from_melody (self, melody_path, description, idx):
-        print(f"-------- Generating --------\nprompt: {description}\nmelody: {melody_path}\n")
+    def music_gen_from_melody (self, melody_path, description, idx):        
+        print(f"-------- Generating --------\nprompt: {description}\nmelody: {melody_path}\n") 
         
         melody, sr = torchaudio.load(melody_path)
         # generates using the melody from the given audio and the provided descriptions.
@@ -41,6 +40,9 @@ class MusicGenFromMelody:
         print("wav dimension ok")
         
         # loudness normalization at -14 db LUFS.
-        output_audio_path = os.path.join(self.output_dir, f"{idx}.wav")
+        output_audio_name = os.path.splitext(os.path.basename(melody_path))[0]
+        output_audio_path = os.path.join(self.output_dir, f"{output_audio_name}.wav")
         audio_write(f'{output_audio_path}', wav.cpu(), self.model.sample_rate, strategy="loudness")
-
+        print(f"MusicGen output file saved: {output_audio_path}")
+        
+        
