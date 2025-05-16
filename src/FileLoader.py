@@ -45,3 +45,13 @@ class FileLoader:
         else:
             raise ValueError("CSV file not loaded. Please load the CSV file first.")
         
+    def get_rows(self):
+        """
+        This method returns the number of rows except for header
+        """
+        if hasattr(self, 'loaded_data'): 
+            rows = len(self.loaded_data)
+            return rows
+        else: 
+            raise ValueError("CSV file not loaded. Please load the CSV file first")
+        

@@ -27,26 +27,25 @@ class ConvertElementToAspect:
     # mathmatic utilities
     # ========================================
     
-    def get_zscores (self, data):
-        """
-        returns z score for each value
-        """
-        mean = np.mean(data)
-        std_dev = np.std(data)
-        zscores = [(x - mean) / std_dev for x in data]
-        return zscores
+    # def get_zscores (self, data):
+    #     """
+    #     returns z score for each value
+    #     """
+    #     mean = np.mean(data)
+    #     std_dev = np.std(data)
+    #     zscores = [(x - mean) / std_dev for x in data]
+    #     return zscores
     
     
-    def get_normalized_values (self, data, new_max, new_min):
-        now_max = max(data)
-        now_min = min(data)
-        normalized_data = [(value - now_min) / (now_max - now_min) * (new_max - new_min)  + new_min for value in data]
-        return normalized_data
-    
-    
-    def round_with_interval (self, normalized_data, intervals):
-        rounded_data = [round(value /intervals) * intervals for value in normalized_data] # round in intervals
+    def round_with_interval (self, normalized_val, intervals):
+        rounded_data = round(normalized_val /intervals) * intervals # round in intervals
         return rounded_data
+    
+    
+    def get_normalized_value (self, val, val_max, val_min, new_max, new_min, intervals):
+        normalized_val = (val - val_min) / (val_max - val_min) * (new_max - new_min) + new_min
+        rounded_val = self.round_with_interval(normalized_val, intervals)
+        return rounded_val
         
     
     # ========================================
@@ -54,31 +53,57 @@ class ConvertElementToAspect:
     # ========================================    
     # TODO: add more musical aspects
     
-    def convert_element_to_valence(self, element_name):
-        element_data = self.data_all[element_name]
-        print(f"'{element_name}' is assigned to 'valence [-100, 100]'")
-        element_zscores = self.get_zscores(element_data) # convert each value in data segment to zscore
+    def convert_element_to_valence(self, element_name, max_thresh, min_thresh, isInverted=False): 
+        valence_array = []
+        element_data = self.data_all['precipitation']
+        for val in element_data: # clip to maximum value
+            if val >= max_thresh: 
+                valence_array.append(self.VALENCE_MAX)
+            elif val < min_thresh:
+                valence_array.append(self.VALENCE_MIN)
+            else:
+                valence_array.append(self.get_normalized_value(val, max_thresh, min_thresh, self.VALENCE_MAX, self.VALENCE_MIN, self.VALENCE_INTERVAL))
         
-        normalized_element = self.get_normalized_values(element_zscores, self.__class__.VALENCE_MAX, self.__class__.VALENCE_MIN) # normalize all z scores into [-100, 100]
-        self.normalized_valence = self.round_with_interval(normalized_element, self.__class__.VALENCE_INTERVAL) # fit all normalized values to intervals
-        return self.normalized_valence
+        # inversion (default = False)
+        if isInverted == True:
+            valence_array = [val * (-1) for val in valence_array]
+            print(f"'{element_name}' [{max_thresh}, {min_thresh}] is mapped to 'valence [0, 100]' (inverted)")
+        else:
+            print(f"'{element_name}' [{max_thresh}, {min_thresh}] is mapped to 'arousal [0, 100]'")
+        
+        return valence_array
     
     
-    def convert_element_to_arousal(self, element_name):
+    def convert_element_to_arousal(self, element_name, max_thresh, min_thresh, isInverted=False):
+        arousal_array = []
         element_data = self.data_all[element_name]
-        print(f"'{element_name}' is assigned to 'arousal [0, 100]'")
-        element_zscores = self.get_zscores(element_data) # convert each value in data segment to zscore
+        for val in element_data: # clip to maximum value
+            if val >= max_thresh: 
+                arousal_array.append(self.AROUSAL_MAX)
+            elif val < min_thresh:
+                arousal_array.append(self.AROUSAL_MIN)
+            else:
+                arousal_array.append(self.get_normalized_value(val, max_thresh, min_thresh, self.AROUSAL_MAX, self.AROUSAL_MIN, self.AROUSAL_INTERVAL))
         
-        normalized_element = self.get_normalized_values(element_zscores, self.__class__.AROUSAL_MAX, self.__class__.AROUSAL_MIN) # normalize all z scores into [0, 100]
-        self.normalized_arousal = self.round_with_interval(normalized_element, self.__class__.AROUSAL_INTERVAL) # fit all normalized values to intervals
-        return self.normalized_arousal
-
+        # inversion (default = False)
+        if isInverted == True:
+            arousal_array = [val * (-1) for val in arousal_array]
+            print(f"'{element_name}' [{max_thresh}, {min_thresh}] is mapped to 'arousal [0, 100]' (inverted)")
+        else:
+            print(f"'{element_name}' [{max_thresh}, {min_thresh}] is mapped to 'arousal [0, 100]'")
+        
+        return arousal_array
+    
     
     # ========================================
     # generate text-based prompt from converted values in musical aspect
     # ========================================
-    # TODO: make it accept several genres
     
-    def get_prompt_text (self):
-        prompt_text_array = [f"Electronic music, {self.normalized_valence[i]}% of valence, and {self.normalized_arousal[i]}% of arousal"for i in range(10)]
-        return prompt_text_array
+    def get_prompt_text (self, valence_array, arousal_array, music_genre):
+        if len(valence_array) != len(arousal_array): # unmatch error handling
+            raise ValueError("unmatch number of valence array and arousal array")
+
+        num_prompt = len(valence_array)
+        prompt_array = [f"{music_genre}, {valence_array[i]}% of valence, and {arousal_array[i]}% of arousal"for i in range(len(valence_array))]
+        print(f"{num_prompt} prompt(s) is created: \n{prompt_array}")
+        return prompt_array
