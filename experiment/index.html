@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Form</title>
+</head>
+<body>
+  <h1>お問い合わせフォーム</h1>
+  <form id="survey-form">
+    <label>Q1: <input type="text" name="name" required></label><br>
+    <label>Q2: <input type="email" name="email" required></label><br>
+    <button type="submit">Submit</button>
+  </form>
+
+  <p id="response-msg"></p>
+
+  <script>
+    const form = document.getElementById('survey-form');
+    const endpoint = 'https://script.google.com/macros/s/AKfycbz2AdF8ZKe2DuHOA7xf1Tx6_pxWn20yQAqKRcknZcKv4EHSifqZPnYpSOpj98HAgc03cA/exec';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result = await res.json();
+      document.getElementById('response-msg').textContent = 
+        result.status === 'success' ? '送信しました。' : 'エラーが発生しました。';
+      form.reset();
+    });
+  </script>
+</body>
+</html>
