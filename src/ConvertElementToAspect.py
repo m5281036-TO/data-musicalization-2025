@@ -43,7 +43,7 @@ class ConvertElementToAspect:
     
     
     def get_normalized_value (self, val, val_max, val_min, new_max, new_min, intervals):
-        normalized_val = val / (val_max - val_min) * (new_max - new_min) + new_min
+        normalized_val = (val - val_min) / (val_max - val_min) * (new_max - new_min) + new_min
         rounded_val = self.round_with_interval(normalized_val, intervals)
         return rounded_val
         
@@ -79,9 +79,9 @@ class ConvertElementToAspect:
         element_data = self.data_all[element_name]
         for val in element_data: # clip to maximum value
             if val >= max_thresh: 
-                arousal_array.append(self.VALENCE_MAX)
+                arousal_array.append(self.AROUSAL_MAX)
             elif val < min_thresh:
-                arousal_array.append(self.VALENCE_MIN)
+                arousal_array.append(self.AROUSAL_MIN)
             else:
                 arousal_array.append(self.get_normalized_value(val, max_thresh, min_thresh, self.AROUSAL_MAX, self.AROUSAL_MIN, self.AROUSAL_INTERVAL))
         
