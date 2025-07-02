@@ -24,18 +24,20 @@ class SunoMusicGenerator:
         }
         
 
-    def generate_music(self, prompt, style):
+    def generate_music(self, prompt, style, upload_url):
         conn = http.client.HTTPSConnection("apibox.erweima.ai")
         payload = json.dumps({
+            "uploadUrl": upload_url,
             "prompt": prompt,
             "style": style,
             "title": style + " " + prompt,
-            "customMode": False,
+            "customMode": True,
             "instrumental": True,
             "model": "V3_5",
+            "clipCount": 1, # experimental feature
             "callBackUrl": "https://api.example.com/callback"
         })
-        conn.request("POST", "/api/v1/generate", payload, self.headers)
+        conn.request("POST", "/api/v1/generate/upload-cover", payload, self.headers)
         response_json = conn.getresponse()
         json_str = response_json.read()
         data_dict = json.loads(json_str)
@@ -78,11 +80,11 @@ class SunoMusicGenerator:
         return None
 
 
-    def download_tracks(self, url, save_dir="../data/suno_downloads"):
+    def download_tracks(self, url, download_filename, save_dir="../data/suno_downloads"):
         os.makedirs(save_dir, exist_ok=True)
         saved_files = []
-        print(f"Downloading: {url}")
-        filename = os.path.join(save_dir, f"track.mp3")
+        print("Downloading track...")
+        filename = os.path.join(save_dir, f"{download_filename}.mp3")
         res = requests.get(url, stream=True)
         with open(filename, "wb") as f:
             for chunk in res.iter_content(chunk_size=8192):
@@ -91,8 +93,9 @@ class SunoMusicGenerator:
         return filename
     
 
-    def run(self, prompt, style):
-        task_id = self.generate_music(prompt, style)
+    def run(self, prompt, style, upload_url, download_filename):
+        task_id = self.generate_music(prompt, style, upload_url)
         audio_url = self.poll_suno_task(task_id)
-        filename = self.download_tracks(audio_url)
+        filename = self.download_tracks(audio_url, download_filename)
         print(f"file downloaded successfully: {filename}")
+        
