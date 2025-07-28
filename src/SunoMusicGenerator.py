@@ -34,9 +34,9 @@ class SunoMusicGenerator:
             "customMode": True,
             "instrumental": True,
             "model": "V3_5",
-            "clipCount": 1, # experimental feature
             "callBackUrl": "https://api.example.com/callback"
         })
+        print(f"Prompt: {prompt}, Melody: {upload_url},")
         conn.request("POST", "/api/v1/generate/upload-cover", payload, self.headers)
         response_json = conn.getresponse()
         json_str = response_json.read()
@@ -46,10 +46,11 @@ class SunoMusicGenerator:
         return task_id
     
 
-    def poll_suno_task(self, task_id, timeout=500, interval=15):
+    def poll_suno_task(self, task_id, timeout=600, interval=15):
         url = f"https://apibox.erweima.ai/api/v1/generate/record-info?taskId={task_id}"
         elapsed = 0
-
+        print(f"Polling... Task ID: {task_id}")
+        
         while elapsed < timeout:
             try:
                 res = requests.get(url, headers=self.headers)
