@@ -46,7 +46,7 @@ class SunoMusicGenerator:
         return task_id
     
 
-    def poll_suno_task(self, task_id, timeout=600, interval=15):
+    def poll_suno_task(self, task_id, timeout=600, interval=60):
         url = f"https://apibox.erweima.ai/api/v1/generate/record-info?taskId={task_id}"
         elapsed = 0
         print(f"Polling... Task ID: {task_id}")
