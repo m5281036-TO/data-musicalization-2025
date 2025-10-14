@@ -89,7 +89,10 @@ class CreateChordsAndMelody:
             track.append(MetaMessage('set_tempo', tempo=tempo, time=0))
         
             valence_norm = (valence_array[idx] + 100) / 200 # [-100, 100] -> normalize to [0, 1]
-            arousal_norm = arousal_array[idx] / 100 # [0, 100] -> normalize to [0, 1]
+            if arousal_array[idx] != 0:
+                arousal_norm = arousal_array[idx] / 100 # [0, 100] -> normalize to [0, 1]
+            else:
+                arousal_norm = 0.1
             
             mode = 6 - round(valence_norm * 6)
             roughness = 1 - arousal_norm

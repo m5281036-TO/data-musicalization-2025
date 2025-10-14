@@ -55,7 +55,7 @@ class ConvertElementToAspect:
     
     def convert_element_to_valence(self, element_name, max_thresh, min_thresh, isInverted=False): 
         valence_array = []
-        element_data = self.data_all['precipitation']
+        element_data = self.data_all[element_name]
         for val in element_data: # clip to maximum value
             if val >= max_thresh: 
                 valence_array.append(self.VALENCE_MAX)
