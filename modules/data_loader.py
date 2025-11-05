@@ -37,7 +37,7 @@ class DataLoader:
                 df = pd.read_csv(io.StringIO(response.text))
             elif ".json" in source_lower:
                 df = pd.read_json(io.StringIO(response.text))
-                self._save_as_csv(df, "json_decoded.csv")
+                self._save_as_csv(df)
             else:
                 raise ValueError("Unsupported file format. Only CSV or JSON are allowed.")
 
@@ -50,13 +50,13 @@ class DataLoader:
                 df = pd.read_csv(source)
             elif source_lower.endswith(".json"):
                 df = pd.read_json(source)
-                self._save_as_csv(df, "json_decoded.csv")
+                self._save_as_csv(df)
             else:
                 raise ValueError("Unsupported file format. Only CSV or JSON are allowed.")
 
         return df
 
-    def _save_as_csv(self, df: pd.DataFrame, filename: str):
+    def _save_as_csv(self, df: pd.DataFrame):
         """
         Save the given DataFrame as a CSV file in ../data/output/csv/.
 
@@ -64,10 +64,8 @@ class DataLoader:
         ----------
         df : pd.DataFrame
             DataFrame to save.
-        filename : str
-            Output filename (CSV).
         """
         output_dir = os.path.join("..", "data", "output", "csv")
         os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, filename)
+        output_path = os.path.join(output_dir, "json_decoded.csv")
         df.to_csv(output_path, index=False, encoding="utf-8")

@@ -35,7 +35,7 @@ class PatternMiner:
 
     Methods
     -------
-    run(source: str) -> pd.DataFrame
+    run(csv_filepath: str) -> pd.DataFrame
         Loads JSON data from file or URL, converts to transactional format,
         and runs FP-Growth algorithm.
     """
@@ -44,14 +44,13 @@ class PatternMiner:
         self.min_support = min_support
         
 
-    def run(self, source: str) -> pd.DataFrame:
+    def run(self, csv_filepath: str) -> pd.DataFrame:
         sep = "\t"
-        minSup = 0.005
-        obj = fpg.FPGrowth(source, minSup, sep)
+        minSup = 0.0005
+        obj = fpg.FPGrowth(csv_filepath, minSup, sep)
         obj.mine()
         obj.printResults()
-        obj.save("../data/output/csv/frequentPatterns.csv")
-        
+        # obj.save("../data/output/csv/frequentPatterns.csv")
         frequentPatternsDataFrame = obj.getPatternsAsDataFrame()
-        return frequentPatternsDataFrame
         
+        return frequentPatternsDataFrame
