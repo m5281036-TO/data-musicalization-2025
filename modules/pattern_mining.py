@@ -13,12 +13,8 @@ Example
 """
 
 import pandas as pd
-import requests
-import tempfile
-import json
-import io
-import os
-from PAMI.frequentPattern.basic import FPGrowth as fpg
+import PAMI.extras.dbStats.TemporalDatabase as stats
+import PAMI.extras.graph.plotLineGraphFromDictionary as plt
 
 
 class PatternMiner:
@@ -42,15 +38,28 @@ class PatternMiner:
 
     def __init__(self, min_support: float = 0.5):
         self.min_support = min_support
+
         
 
-    def run(self, csv_filepath: str) -> pd.DataFrame:
-        sep = "\t"
-        minSup = 0.0005
-        obj = fpg.FPGrowth(csv_filepath, minSup, sep)
-        obj.mine()
-        obj.printResults()
-        # obj.save("../data/output/csv/frequentPatterns.csv")
-        frequentPatternsDataFrame = obj.getPatternsAsDataFrame()
+    def run(self, csv_filepath: str, file_separator='\t') -> pd.DataFrame:
+        obj=stats.TemporalDatabase(csv_filepath, sep=file_separator)
+        obj.run()
         
-        return frequentPatternsDataFrame
+        #Printing each of the database statistics
+        print(f'Database size : {obj.getDatabaseSize()}')
+        print(f'Total number of items : {obj.getTotalNumberOfItems()}')
+        print(f'Database sparsity : {obj.getSparsity()}')
+        print(f'Minimum Transaction Size : {obj.getMinimumTransactionLength()}')
+        print(f'Average Transaction Size : {obj.getAverageTransactionLength()}')
+        print(f'Maximum Transaction Size : {obj.getMaximumTransactionLength()}')
+        print(f'Standard Deviation Transaction Size : {obj.getStandardDeviationTransactionLength()}')
+        print(f'Variance in Transaction Sizes : {obj.getVarianceTransactionLength()}')
+        
+        itemFrequencies = obj.getSortedListOfItemFrequencies()
+        transactionLength = obj.getTransanctionalLengthDistribution()
+        
+        itemFrequencies = obj.getFrequenciesInRange()
+        transactionLength = obj.getTransanctionalLengthDistribution()
+        plt.plotLineGraphFromDictionary(itemFrequencies, end = 100, title = 'Items\' frequency graph', xlabel = 'No of items', ylabel= 'frequency')
+        plt.plotLineGraphFromDictionary(transactionLength, end = 100, title = 'transaction distribution graph', xlabel = 'transaction length', ylabel = 'frequency')
+        
