@@ -1,6 +1,5 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 class Visualizer:
@@ -65,7 +64,7 @@ class Visualizer:
         plt.xlabel("Timestamp")
         plt.ylabel("Value")
         plt.grid(True)
-        plt.legend(loc="best")  # ← 凡例を自動配置
+        plt.legend(loc="best")
         plt.tight_layout()
         plt.show()
             
@@ -92,19 +91,18 @@ class Visualizer:
         if col_x_index not in self.df.columns or col_y_index not in self.df.columns:
             raise ValueError("Specified columns are not present in the DataFrame.")
 
-        # 欠損値を除去
+        # omit NaN
         data = self.df[[col_x_index, col_y_index]].dropna()
 
-        # col_xをbins個に区切ってカテゴリ化
+        # bins
         data["x_bin"] = pd.cut(data[col_x_index], bins=bins)
 
-        # 各binにおけるcol_yの平均値を計算
+        # compute average on each bin
         binned_means = data.groupby("x_bin")[col_y_index].mean()
 
-        # ビンの中心を取得
+        # get mean value of bin
         bin_centers = [interval.mid for interval in binned_means.index]
 
-        # 棒グラフ描画
         plt.figure(figsize=(8, 5))
         plt.bar(bin_centers, binned_means, width=(bin_centers[1] - bin_centers[0]) * 0.8)
         plt.xlabel(col_x_index)
@@ -114,6 +112,3 @@ class Visualizer:
         plt.tight_layout()
         plt.show()
 
-        print("Binned mean values:")
-        print(binned_means)
-    
