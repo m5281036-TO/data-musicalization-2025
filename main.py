@@ -1,4 +1,4 @@
-from modules import Visualizer, TimestampConvertToDatetime, DataLoader, SafecastLoader, TimeSeriesPatternMiner, DataFrameSelector, ConvertElementToAspect, SunoMusicGenerator
+from modules import Visualizer, TimestampConvertToDatetime, CreateChordsAndMelody, DataLoader, SafecastLoader, TimeSeriesPatternMiner, DataFrameSelector, ConvertElementToAspect, SunoMusicGenerator, ValenceArousalToEmotion
 import pandas as pd
 
 def main():
@@ -45,7 +45,7 @@ def main():
         col1_index="value", 
         col2_index="latitude",
         start_row=20, 
-        end_row=40
+        end_row=30
         )
     selected_df.to_csv("./data/output/csv/safecast_data_selected.csv")
     print(selected_df)
@@ -58,9 +58,8 @@ def main():
     # ========================================
     # pattern mining using Stumpy
     # ========================================
-    miner = TimeSeriesPatternMiner(selected_df, time_col='captured_at', value_col='value')
-    result = miner.pattern_miner(window_size=10, threshold=None, normalize=True, return_results=True)
-    print(result)
+    # miner = TimeSeriesPatternMiner(selected_df, time_col='captured_at', value_col='value')
+    # miner.pattern_miner(window_size=10, threshold=None, normalize=True, return_results=True)
     
     
     # ========================================
@@ -74,8 +73,16 @@ def main():
     arousal_array = element_converter.convert_element_to_arousal('latitude', min_thresh=35, max_thresh=40)
     print(valence_array, arousal_array)
 
-    # e = ValenceArousalToEmotion(valence_array, arousal_array)
-    # emotion_array = e.convert_valencea_arousal_to_emotion()
+    e = ValenceArousalToEmotion(valence_array, arousal_array)
+    emotion_array = e.convert_valencea_arousal_to_emotion()
+    print(emotion_array)
+    
+    
+    # ========================================
+    # create chords and melody from specified valence-arousal coordinates
+    # ========================================
+    melody_generator = CreateChordsAndMelody()
+    melody_generator.create_midi_and_wav(valence_array, arousal_array)
     
     
     # ========================================
@@ -83,8 +90,8 @@ def main():
     # ========================================
     
     pass
-    generater = SunoMusicGenerator()
-    generater
+    # generater = SunoMusicGenerator()
+    # generater
     
     
     
