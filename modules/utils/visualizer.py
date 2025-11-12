@@ -18,9 +18,59 @@ class Visualizer:
         dataframe : pd.DataFrame
             The dataset to analyze. Must contain the numeric columns of interest.
         """
+        
         self.df = dataframe
+        
+        
+    def plot_time_series_data(self, col_timestamp_index: str, col_x_index: str, col_y_index: str):
+        """
+        Plot two numerical columns from the stored DataFrame against a common timestamp column.
 
-    def plot_binned_histogram(self, col_x: str, col_y: str, bins: int = 10):
+        Parameters
+        ----------
+        col_timestamp_index : str
+            The column name representing timestamps (x-axis).
+        col_x_index : str
+            The first data column to plot (displayed in blue).
+        col_y_index : str
+            The second data column to plot (displayed in red).
+
+        Description
+        -----------
+        This method visualizes the temporal behavior of two numerical variables
+        on the same time axis for comparison. The timestamp column is used as
+        the horizontal axis, and both specified columns are plotted as separate
+        colored lines. The resulting figure includes a legend, gridlines, and
+        labeled axes for clarity.
+        """
+        
+        plt.plot(
+            self.df[col_timestamp_index],
+            self.df[col_x_index],
+            label=f"{col_x_index}",
+            color="blue",
+            linewidth=2
+        )
+
+        # Red line
+        plt.plot(
+            self.df[col_timestamp_index],
+            self.df[col_y_index],
+            label=f"{col_y_index}",
+            color="red",
+            linewidth=2
+        )
+
+        plt.title("Time Series Comparison")
+        plt.xlabel("Timestamp")
+        plt.ylabel("Value")
+        plt.grid(True)
+        plt.legend(loc="best")  # ← 凡例を自動配置
+        plt.tight_layout()
+        plt.show()
+            
+
+    def plot_binned_histogram(self, col_x_index: str, col_y_index: str, bins: int = 10):
         """
         Plot a histogram-like bar chart where X is binned and Y represents the mean value
         within each bin.
@@ -39,17 +89,17 @@ class Visualizer:
         None
             Displays the bar plot.
         """
-        if col_x not in self.df.columns or col_y not in self.df.columns:
+        if col_x_index not in self.df.columns or col_y_index not in self.df.columns:
             raise ValueError("Specified columns are not present in the DataFrame.")
 
         # 欠損値を除去
-        data = self.df[[col_x, col_y]].dropna()
+        data = self.df[[col_x_index, col_y_index]].dropna()
 
         # col_xをbins個に区切ってカテゴリ化
-        data["x_bin"] = pd.cut(data[col_x], bins=bins)
+        data["x_bin"] = pd.cut(data[col_x_index], bins=bins)
 
         # 各binにおけるcol_yの平均値を計算
-        binned_means = data.groupby("x_bin")[col_y].mean()
+        binned_means = data.groupby("x_bin")[col_y_index].mean()
 
         # ビンの中心を取得
         bin_centers = [interval.mid for interval in binned_means.index]
@@ -57,12 +107,13 @@ class Visualizer:
         # 棒グラフ描画
         plt.figure(figsize=(8, 5))
         plt.bar(bin_centers, binned_means, width=(bin_centers[1] - bin_centers[0]) * 0.8)
-        plt.xlabel(col_x)
-        plt.ylabel(f"Mean of {col_y}")
-        plt.title(f"{col_y} vs {col_x} (binned into {bins} intervals)")
+        plt.xlabel(col_x_index)
+        plt.ylabel(f"Mean of {col_y_index}")
+        plt.title(f"{col_y_index} vs {col_x_index} (binned into {bins} intervals)")
         plt.grid(axis="y", linestyle="--", alpha=0.6)
         plt.tight_layout()
         plt.show()
 
         print("Binned mean values:")
         print(binned_means)
+    

@@ -1,4 +1,4 @@
-from modules import Visualizer, CSVNaNReplacer, DataLoader, SafecastLoader, TimeSeriesPatternMiner, DataFrameSelector
+from modules import Visualizer, DataLoader, SafecastLoader, TimeSeriesPatternMiner, DataFrameSelector, ConvertElementToAspect, SunoMusicGenerator
 import pandas as pd
 
 def main():
@@ -34,21 +34,61 @@ def main():
     # visualize selected dataframe
     # ========================================
     selector = DataFrameSelector()
-    selected_df = selector.select_columns(df, timestamp="captured_at", col1="value")
+    selected_df = selector.select_columns(
+        df, 
+        timestamp="captured_at", 
+        col1_index="value", 
+        col2_index="latitude",
+        start_row=20, 
+        end_row=30
+        )
     selected_df.to_csv("./data/output/csv/safecast_data_selected.csv")
     print(selected_df)
     print(f"Shape: {selected_df.shape}\n")
+    
+    visualizer = Visualizer(selected_df)
+    visualizer.plot_time_series_data(col_timestamp_index="captured_at", col_x_index="value", col_y_index="latitude")
     
     
     # ========================================
     # pattern mining using Stumpy
     # ========================================
-    miner = TimeSeriesPatternMiner(selected_df, time_col='captured_at', value_col='value')
-    result = miner.pattern_miner(window_size=20, threshold=None, normalize=True, return_results=True)
-    print(result)
+    # miner = TimeSeriesPatternMiner(selected_df, time_col='captured_at', value_col='value')
+    # result = miner.pattern_miner(window_size=20, threshold=None, normalize=True, return_results=True)
+    # print(result)
     
-    # visualizer = Visualizer(selected_df)
-    # visualizer.plot_binned_histogram("value", "latitude")
+    
+    # ========================================
+    # convert values in rows to musical aspect (2 rows)
+    # ========================================
+    element_converter = ConvertElementToAspect(selected_df)
+
+    # convert valence [-100, 100]
+    valence_array = element_converter.convert_element_to_valence('value', min_thresh=26, max_thresh=40)
+    # convert valence [0, 100]
+    arousal_array = element_converter.convert_element_to_arousal('latitude', min_thresh=35, max_thresh=40)
+    print(valence_array, arousal_array)
+
+    # e = ValenceArousalToEmotion(valence_array, arousal_array)
+    # emotion_array = e.convert_valencea_arousal_to_emotion()
+    
+    
+    # ========================================
+    # map normalized value to musical aspect (valence-arousal emootion)
+    # ========================================
+    
+    pass
+    generater = SunoMusicGenerator()
+    generater
+    
+    
+    
+    # ========================================
+    # connect SUNO API and generate music
+    # ========================================
+    
+    
+    
     
         
 
