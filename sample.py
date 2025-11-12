@@ -44,8 +44,8 @@ def main():
         timestamp="captured_at", 
         col1_index="value", 
         col2_index="latitude",
-        start_row=20, 
-        end_row=30
+        start_row=19, 
+        end_row=26
         )
     selected_df.to_csv("./data/output/csv/safecast_data_selected.csv")
     print(selected_df)
@@ -68,7 +68,7 @@ def main():
     element_converter = ConvertElementToAspect(selected_df)
 
     # convert valence [-100, 100]
-    valence_array = element_converter.convert_element_to_valence('value', min_thresh=26, max_thresh=40)
+    valence_array = element_converter.convert_element_to_valence('value', min_thresh=15, max_thresh=20)
     # convert valence [0, 100]
     arousal_array = element_converter.convert_element_to_arousal('latitude', min_thresh=35, max_thresh=40)
     print(valence_array, arousal_array)
