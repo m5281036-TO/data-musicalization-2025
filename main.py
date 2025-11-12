@@ -1,4 +1,4 @@
-from modules import Visualizer, DataLoader, SafecastLoader, TimeSeriesPatternMiner, DataFrameSelector, ConvertElementToAspect, SunoMusicGenerator
+from modules import Visualizer, TimestampConvertToDatetime, DataLoader, SafecastLoader, TimeSeriesPatternMiner, DataFrameSelector, ConvertElementToAspect, SunoMusicGenerator
 import pandas as pd
 
 def main():
@@ -20,10 +20,14 @@ def main():
     # df = sc_loader.fetch_device_data(device_id=4824, date_from="2011-01-01", date_to="2025-10-01")
     df = pd.read_csv("./data/output/csv/safecast_data_user_4824.csv")
     
+    # TODO: dfのtimestamp列にある値をdatetime型に変換し、時系列順に並び替えて出力する
+    # convert timestamp to datetime if needed
+    # timestamp_converter = TimestampConvertToDatetime(df)
+    # converted_df = timestamp_converter.timestamp_convert_to_datetime("captured_at").copy()
+
     # export to csv
     df_csv_filename = "./data/output/csv/safecast_data.csv"
     df.to_csv(df_csv_filename)
-        
     print("DataFrame Loaded:")
     print(df.head())
     print(f"Shape: {df.shape}\n")
@@ -39,12 +43,12 @@ def main():
         timestamp="captured_at", 
         col1_index="value", 
         col2_index="latitude",
-        start_row=20, 
-        end_row=30
+        start_row=10, 
+        end_row=20
         )
     selected_df.to_csv("./data/output/csv/safecast_data_selected.csv")
     print(selected_df)
-    print(f"Shape: {selected_df.shape}\n")
+    print(f"Selected dataframe shape: {selected_df.shape}\n")
     
     visualizer = Visualizer(selected_df)
     visualizer.plot_time_series_data(col_timestamp_index="captured_at", col_x_index="value", col_y_index="latitude")

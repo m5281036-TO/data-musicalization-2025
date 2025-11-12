@@ -3,6 +3,7 @@ import requests
 import io
 import os
 
+
 class DataLoader:
     """
     DataLoader Class
@@ -53,7 +54,6 @@ class DataLoader:
                 self._save_as_csv(df)
             else:
                 raise ValueError("Unsupported file format. Only CSV or JSON are allowed.")
-
         return df
 
     def _save_as_csv(self, df: pd.DataFrame):
