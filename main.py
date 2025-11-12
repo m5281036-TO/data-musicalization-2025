@@ -17,8 +17,10 @@ def main():
     # example: load safecast timeseries data
     # ========================================
     sc_loader = SafecastLoader()
-    # df = sc_loader.fetch_device_data(device_id=4824, date_from="2011-01-01", date_to="2025-10-01")
-    df = pd.read_csv("./data/output/csv/safecast_data_user_4824.csv")
+    # df = sc_loader.fetch_device_data(device_id=126, date_from="2011-01-01", date_to="2025-10-01")
+    # or load from local file
+    df_csv_filename = "./data/output/csv/safecast_data_device_126.csv"
+    df = pd.read_csv(df_csv_filename)
     
     # TODO: dfのtimestamp列にある値をdatetime型に変換し、時系列順に並び替えて出力する
     # convert timestamp to datetime if needed
@@ -26,7 +28,6 @@ def main():
     # converted_df = timestamp_converter.timestamp_convert_to_datetime("captured_at").copy()
 
     # export to csv
-    df_csv_filename = "./data/output/csv/safecast_data.csv"
     df.to_csv(df_csv_filename)
     print("DataFrame Loaded:")
     print(df.head())
@@ -43,8 +44,8 @@ def main():
         timestamp="captured_at", 
         col1_index="value", 
         col2_index="latitude",
-        start_row=10, 
-        end_row=20
+        start_row=20, 
+        end_row=40
         )
     selected_df.to_csv("./data/output/csv/safecast_data_selected.csv")
     print(selected_df)
@@ -57,9 +58,9 @@ def main():
     # ========================================
     # pattern mining using Stumpy
     # ========================================
-    # miner = TimeSeriesPatternMiner(selected_df, time_col='captured_at', value_col='value')
-    # result = miner.pattern_miner(window_size=20, threshold=None, normalize=True, return_results=True)
-    # print(result)
+    miner = TimeSeriesPatternMiner(selected_df, time_col='captured_at', value_col='value')
+    result = miner.pattern_miner(window_size=10, threshold=None, normalize=True, return_results=True)
+    print(result)
     
     
     # ========================================
