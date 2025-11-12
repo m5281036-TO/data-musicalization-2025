@@ -5,7 +5,7 @@ import requests
 import http.client
 
 class SunoMusicGenerator:
-    def __init__(self, config_path="./config/config.json"):
+    def __init__(self, config_path="./config/suno_api_config.json"):
         try:
             with open(config_path, "r") as f:
                 config = json.load(f)
@@ -22,6 +22,7 @@ class SunoMusicGenerator:
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
+
         
 
     def generate_music(self, prompt, style, upload_url):
@@ -81,11 +82,12 @@ class SunoMusicGenerator:
         return None
 
 
-    def download_tracks(self, url, download_filename, save_dir="../data/suno_downloads"):
-        os.makedirs(save_dir, exist_ok=True)
-        saved_files = []
+    def download_tracks(self, url, download_filename, file_save_path="./data/output/generated_music_suno"):
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        output_dir = os.path.join(file_save_path, timestamp)
+        os.makedirs(file_save_path, exist_ok=True)
         print("Downloading track...")
-        filename = os.path.join(save_dir, f"{download_filename}.mp3")
+        filename = os.path.join(output_dir, f"{download_filename}.mp3")
         res = requests.get(url, stream=True)
         with open(filename, "wb") as f:
             for chunk in res.iter_content(chunk_size=8192):

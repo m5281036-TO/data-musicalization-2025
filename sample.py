@@ -82,27 +82,29 @@ def main():
     # create chords and melody from specified valence-arousal coordinates
     # ========================================
     melody_generator = CreateChordsAndMelody()
-    melody_generator.create_midi_and_wav(valence_array, arousal_array)
-    
-    
-    # ========================================
-    # map normalized value to musical aspect (valence-arousal emootion)
-    # ========================================
-    
-    pass
-    # generater = SunoMusicGenerator()
-    # generater
-    
+    melody_dir_path = melody_generator.create_midi_and_wav(valence_array, arousal_array)
     
     
     # ========================================
     # connect SUNO API and generate music
-    # ========================================
-    
-    
-    
-    
-        
+    # ========================================    
+    style = 'Electronic Music'
+    upload_url_base = 'https://audio-eval-2025-05.web.app/input_melody/'
+    upload_filenames = ["melody_1_val-100_aro90", "melody_2_val20_aro100", "melody_3_val-10_aro0", "melody_4_val100_aro0", "melody_5_val0_aro0"]
+
+    # generate tasks
+    suno_generator = SunoMusicGenerator()
+    task_ids = []
+    for idx, emotion_param in enumerate(emotion_array):
+        upload_url = f"{upload_url_base}{upload_filenames[idx]}.mp3"
+        task_ids.append(suno_generator.generate_music(emotion_param, style, upload_url))
+        if idx == 4: # fail safe not to consume API resources
+            break
+    print(f"{len(task_ids)} task(s) processing: {task_ids}")
+    # download generated tracks
+    for idx, task_id in enumerate(task_ids):
+        audio_url = suno_generator.poll_suno_task(task_id)
+        filename = suno_generator.download_tracks(audio_url, f'{upload_filenames[idx]}')
 
 if __name__ == "__main__":
     main()

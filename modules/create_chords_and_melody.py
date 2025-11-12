@@ -54,7 +54,7 @@ class CreateChordsAndMelody:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.output_dir = os.path.join(file_save_path, timestamp)
 
-    def create_midi_and_wav(self, valence_array, arousal_array):
+    def create_midi_and_wav(self, valence_array, arousal_array) -> str:
         """
         Generate MIDI sequences and WAV audio from valence and arousal arrays.
 
@@ -247,14 +247,4 @@ class CreateChordsAndMelody:
                 print(f"WAV file saved as {wave_path}")
 
             midi_to_wav(midi_path)
-
-    def get_output_directory_path(self):
-        """
-        Return the directory path where MIDI/WAV files are stored.
-
-        Returns
-        -------
-        str
-            Output directory path.
-        """
         return self.output_dir
