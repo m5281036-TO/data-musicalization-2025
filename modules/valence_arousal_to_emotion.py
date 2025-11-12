@@ -1,5 +1,3 @@
-import numpy as np
-
 class ValenceArousalToEmotion:
     
     def __init__(self, valence_array, arousal_array):
