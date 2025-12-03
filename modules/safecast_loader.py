@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import time
+from .utils import TimeSortDataFrame
 
 
 class SafecastLoader:
@@ -11,7 +12,7 @@ class SafecastLoader:
 
     BASE_URL = "https://api.safecast.org/en-US/measurements.json"
 
-    def __init__(self, page_limit: int = 40, max_retries: int = 3, retry_delay: int = 5):
+    def __init__(self, time_sort: bool=False, timestamp_index_name: str=None, page_limit: int = 40, max_retries: int = 3, retry_delay: int = 5):
         """
         Initialize the SafecastLoader.
 
@@ -24,6 +25,8 @@ class SafecastLoader:
         retry_delay : int
             Waiting time in seconds between retries (default: 5).
         """
+        self.time_sort = time_sort
+        self.timestamp_index_name = timestamp_index_name
         self.page_limit = page_limit
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -48,7 +51,7 @@ class SafecastLoader:
         pandas.DataFrame
             Combined DataFrame of all measurement records (partial if connection fails).
         """
-        all_data = []
+        df = []
         page = 1
 
         print(f"Fetching data for device_id={device_id} from {date_from} to {date_to} ...")
@@ -84,7 +87,7 @@ class SafecastLoader:
                         print("No more data returned.")
                         raise StopIteration
 
-                    all_data.extend(data)
+                    df.extend(data)
                     print(f"Retrieved {len(data)} records from page {page}.")
                     page += 1
                     break  # success, break retry loop
@@ -95,7 +98,7 @@ class SafecastLoader:
                     time.sleep(self.retry_delay)
                 except StopIteration:
                     print("End of dataset reached.")
-                    return pd.DataFrame(all_data)
+                    return pd.DataFrame(df)
                 except Exception as e:
                     print(f"Unexpected error: {e}")
                     retries = self.max_retries + 1  # stop further retries
@@ -104,5 +107,8 @@ class SafecastLoader:
                 print(f"Failed to retrieve page {page} after {self.max_retries} retries. Stopping.")
                 break
 
-        print(f"Total records retrieved: {len(all_data)}")
-        return pd.DataFrame(all_data)
+        if self.time_sort == True:
+            time_sorter = TimeSortDataFrame(df, timestamp_index_name=self.timestamp_index_name)
+            time_sorter.sort_by_time()
+        print(f"Total records retrieved: {len(df)}")
+        return pd.DataFrame(df)
