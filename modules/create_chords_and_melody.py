@@ -202,7 +202,7 @@ class CreateChordsAndMelody:
 
             # --- Save MIDI file --- #
             os.makedirs(self.output_dir, exist_ok=True)
-            file_name = f"melody_{idx}_val{valence}_aro{arousal}.mid"
+            file_name = f"melody_val{valence}_aro{arousal}.mid"
             midi_path = os.path.join(self.output_dir, file_name)
             mid.save(midi_path)
             print(f"MIDI file saved: {midi_path}")
@@ -242,7 +242,7 @@ class CreateChordsAndMelody:
         audio = np.int16(audio / np.max(np.abs(audio)) * 32767)
         wave_path = os.path.join(
             self.output_dir,
-            f"melody_{idx}_val{valence}_aro{arousal}.wav"
+            f"melody_val{valence}_aro{arousal}.wav"
         )
         write(wave_path, self.sample_rate, audio)
         print(f"WAV file saved as {wave_path}")

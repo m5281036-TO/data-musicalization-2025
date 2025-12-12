@@ -55,10 +55,20 @@ def main():
     # merge 2 filtered dataframes
     time_merger = TimeAlignedDataMerger()
     df_merged = time_merger.merge(df1_filtered, "captured_at", df2_filtered, "captured_at")
+    df_merged.to_csv("./data/output/csv/df_merged.csv")
     print(df_merged)
     
-    visualizer = Visualizer(df1_filtered, df2_filtered)
-    visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="value", value_index2="value")
+    # ========================================
+    # pick random continous segments
+    # ========================================
+    picker = RandomSegmentPicker(df_merged, num_rows=7)
+    
+    for idx in range(10): 
+        df_random_7 = picker.pick_random_segment()
+        df_random_7.to_csv(f"./data/cache/df_random_7_{idx+1}.csv")
+        print(df_random_7)
+        # visualizer = Visualizer(df_random_7, df_random_7)
+        # visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="value1", value_index2="value2")
     
     
     # # ========================================
@@ -80,20 +90,29 @@ def main():
 
     # print(profile)
     
+    
     # ========================================
     # convert values in rows to musical aspect (2 rows)
     # ========================================
-    element_converter = ConvertElementToAspect(sampled_df)
+    valence_list = []
+    arousal_list = []
+    emotion_list = []
+    for idx in range(10):
+        random_segment_path = f"./data/cache/df_random_7_{idx+1}.csv"
+        df_random_7 = pd.read_csv(random_segment_path)        
+        element_converter = ConvertElementToAspect(df_random_7)
 
-    # convert valence [-100, 100]
-    valence_array = element_converter.convert_element_to_valence('value', min_thresh=15, max_thresh=20)
-    # convert valence [0, 100]
-    arousal_array = element_converter.convert_element_to_arousal('precipitation', min_thresh=0, max_thresh=30)
-    print(valence_array, arousal_array)
+        # convert valence [-100, 100]
+        valence_list.append(element_converter.convert_element_to_valence('value1', min_thresh=df_random_7["value1"].min(), max_thresh=df_random_7["value1"].max()))
+        # convert valence [0, 100]
+        arousal_list.append(element_converter.convert_element_to_arousal('value2', min_thresh=df_random_7["value2"].min(), max_thresh=df_random_7["value2"].max()))
+            
+    print(f"valence_list: {valence_list}\n arousal_list: {arousal_list}")
+    
+    e = ValenceArousalToEmotion(valence_list, arousal_list)
+    emotion_list = e.convert_valence_arousal_to_emotion()
 
-    e = ValenceArousalToEmotion(valence_array, arousal_array)
-    emotion_array = e.convert_valencea_arousal_to_emotion()
-    print(emotion_array)
+    print(emotion_list)
     
     
     # ========================================
@@ -106,13 +125,13 @@ def main():
     # connect SUNO API and generate music
     # ========================================    
     style = 'Electronic Music'
-    upload_url_base = 'https://audio-eval-2025-05.web.app/input_melody/'
+    upload_url_base = 'https://audio-eval-2025-05.web.app/experiment_stimuli_1212/'
     upload_filenames = ["melody_1_val-100_aro0", "melody_2_val-100_aro65", "melody_3_val-20_aro65", "melody_4_val20_aro100", "melody_5_val100_aro100", "melody_6_val-20_aro100", "melody_7_val100_aro15"]
 
     # generate tasks
     suno_generator = SunoMusicGenerator()
     task_ids = []
-    for idx, emotion_param in enumerate(emotion_array):
+    for idx, emotion_param in enumerate(emotion_list):
         upload_url = f"{upload_url_base}{upload_filenames[idx]}.mp3"
         task_ids.append(suno_generator.generate_music(emotion_param, style, upload_url))
         if idx == 10: # fail safe not to consume API resources
