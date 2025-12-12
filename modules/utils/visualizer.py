@@ -52,19 +52,19 @@ class Visualizer:
         Plot values from two DataFrames on the same timestamp range.
         """
 
-        df1_f, df2_f = self._filter_common_timestamp_range(col_timestamp_index)
+        # df1_f, df2_f = self._filter_common_timestamp_range(col_timestamp_index)
 
         plt.plot(
-            df1_f[col_timestamp_index],
-            df1_f[value_index1],
+            self.df1[col_timestamp_index],
+            self.df1[value_index1],
             label=f"df1: {value_index1}",
             color="blue",
             linewidth=2
         )
 
         plt.plot(
-            df2_f[col_timestamp_index],
-            df2_f[value_index2],
+            self.df2[col_timestamp_index],
+            self.df2[value_index2],
             label=f"df2: {value_index2}",
             color="red",
             linewidth=2

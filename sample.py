@@ -1,4 +1,4 @@
-from modules import Visualizer, TimestampConvertToDatetime, CreateChordsAndMelody, DataLoader, SafecastLoader, TimeSeriesPatternAnalyzer, DataFrameSelector, ConvertElementToAspect, RandomSegmentPicker, SunoMusicGenerator, ValenceArousalToEmotion
+from modules import Visualizer, TimestampConvertToDatetime, CreateChordsAndMelody, DataLoader, SafecastLoader, TimeSeriesPatternAnalyzer, DataFrameSelector, ConvertElementToAspect, RandomSegmentPicker, SunoMusicGenerator, ValenceArousalToEmotion, FilterCommonTimestampRange, TimeAlignedDataMerger
 import pandas as pd
 
 def main():
@@ -16,8 +16,8 @@ def main():
     # example: load safecast timeseries data
     # ========================================
     sc_loader = SafecastLoader(time_sort=False, timestamp_index_name='captured_at', page_limit=1000)
-    df2 = sc_loader.fetch_device_data(user_id=6, date_from="2015-10-24", date_to="2016-08-01")
-    df2.to_csv("./data/output/csv/safecast_user_6.csv")
+    # df2 = sc_loader.fetch_device_data(user_id=6, date_from="2015-10-24", date_to="2016-08-01")
+    # df2.to_csv("./data/output/csv/safecast_user_6.csv")
     
     # or load from existing csv file
     # df = pd.read_csv("./data/output/csv/safecast_device_126.csv")
@@ -45,13 +45,20 @@ def main():
     # ========================================
     # Visualization
     # ========================================
-    # df = pd.read_csv("./random_1000h.csv")
-    # picker = RandomSegmentPicker(df, 5)
-    # sampled_df = picker()
-    # print(sampled_df)
-    visualizer = Visualizer(df1, df1)
+    # filter only overlapped segment
+    filter = FilterCommonTimestampRange(df1, df2)
+    df1_filtered, df2_filtered = filter.filter_common_timestamp_range(col_timestamp_index1="captured_at", col_timestamp_index2="captured_at")
+    
+    visualizer = Visualizer(df1_filtered, df2_filtered)
     visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="value", value_index2="value")
     
+    # merge 2 filtered dataframes
+    time_merger = TimeAlignedDataMerger()
+    df_merged = time_merger.merge(df1_filtered, "captured_at", df2_filtered, "captured_at")
+    print(df_merged)
+    
+    visualizer = Visualizer(df1_filtered, df2_filtered)
+    visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="value", value_index2="value")
     
     
     # # ========================================
