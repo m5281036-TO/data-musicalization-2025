@@ -4,111 +4,76 @@ import matplotlib.pyplot as plt
 
 class Visualizer:
     """
-    Visualize and analyze the distribution relationship between two numerical columns
-    by binning the X-axis and summarizing Y-axis values.
+    Visualize and analyze the relationship between two DataFrames.
     """
 
-    def __init__(self, dataframe: pd.DataFrame):
-        """
-        Initialize the visualizer with a pandas DataFrame.
+    def __init__(self, dataframe1: pd.DataFrame, dataframe2: pd.DataFrame):
+        self.df1 = dataframe1
+        self.df2 = dataframe2
 
-        Parameters
-        ----------
-        dataframe : pd.DataFrame
-            The dataset to analyze. Must contain the numeric columns of interest.
+
+    def _filter_common_timestamp_range(self, col_timestamp_index: str):
         """
-        
-        self.df = dataframe
-        
-        
-    def plot_time_series_data(self, col_timestamp_index: str, col_x_index: str, col_y_index: str):
-        """
-        Plot two numerical columns from the stored DataFrame against a common timestamp column.
+        Extract rows where both DataFrames share a common timestamp range.
 
         Parameters
         ----------
         col_timestamp_index : str
-            The column name representing timestamps (x-axis).
-        col_x_index : str
-            The first data column to plot (displayed in blue).
-        col_y_index : str
-            The second data column to plot (displayed in red).
+            Column name representing timestamps in both DataFrames.
 
-        Description
-        -----------
-        This method visualizes the temporal behavior of two numerical variables
-        on the same time axis for comparison. The timestamp column is used as
-        the horizontal axis, and both specified columns are plotted as separate
-        colored lines. The resulting figure includes a legend, gridlines, and
-        labeled axes for clarity.
+        Returns
+        -------
+        df1_filtered, df2_filtered : pd.DataFrame
+            Filtered DataFrames restricted to the overlapping timestamp interval.
         """
-        
+
+        df1 = self.df1.copy()
+        df2 = self.df2.copy()
+
+        # datetime conversion
+        df1[col_timestamp_index] = pd.to_datetime(df1[col_timestamp_index])
+        df2[col_timestamp_index] = pd.to_datetime(df2[col_timestamp_index])
+
+        # determine overlap
+        start = max(df1[col_timestamp_index].min(), df2[col_timestamp_index].min())
+        end   = min(df1[col_timestamp_index].max(), df2[col_timestamp_index].max())
+
+        if start >= end:
+            raise ValueError("No overlapping timestamp interval.")
+
+        df1_filtered = df1[(df1[col_timestamp_index] >= start) & (df1[col_timestamp_index] <= end)]
+        df2_filtered = df2[(df2[col_timestamp_index] >= start) & (df2[col_timestamp_index] <= end)]
+
+        return df1_filtered, df2_filtered
+
+
+    def plot_time_series(self, col_timestamp_index: str, value_index1: str, value_index2: str):
+        """
+        Plot values from two DataFrames on the same timestamp range.
+        """
+
+        df1_f, df2_f = self._filter_common_timestamp_range(col_timestamp_index)
+
         plt.plot(
-            self.df[col_timestamp_index],
-            self.df[col_x_index],
-            label=f"{col_x_index}",
+            df1_f[col_timestamp_index],
+            df1_f[value_index1],
+            label=f"df1: {value_index1}",
             color="blue",
             linewidth=2
         )
 
-        # Red line
         plt.plot(
-            self.df[col_timestamp_index],
-            self.df[col_y_index],
-            label=f"{col_y_index}",
+            df2_f[col_timestamp_index],
+            df2_f[value_index2],
+            label=f"df2: {value_index2}",
             color="red",
             linewidth=2
         )
 
-        plt.title("Time Series Comparison")
+        plt.title("Time Series Comparison (Overlapping Interval Only)")
         plt.xlabel("Timestamp")
         plt.ylabel("Value")
         plt.grid(True)
         plt.legend(loc="best")
         plt.tight_layout()
         plt.show()
-            
-
-    def plot_binned_histogram(self, col_x_index: str, col_y_index: str, bins: int = 10):
-        """
-        Plot a histogram-like bar chart where X is binned and Y represents the mean value
-        within each bin.
-
-        Parameters
-        ----------
-        col_x : str
-            Column name to be used as the binning variable (X-axis).
-        col_y : str
-            Column name for the dependent variable (Y-axis).
-        bins : int, optional
-            Number of bins to use for grouping X values (default is 10).
-
-        Returns
-        -------
-        None
-            Displays the bar plot.
-        """
-        if col_x_index not in self.df.columns or col_y_index not in self.df.columns:
-            raise ValueError("Specified columns are not present in the DataFrame.")
-
-        # omit NaN
-        data = self.df[[col_x_index, col_y_index]].dropna()
-
-        # bins
-        data["x_bin"] = pd.cut(data[col_x_index], bins=bins)
-
-        # compute average on each bin
-        binned_means = data.groupby("x_bin")[col_y_index].mean()
-
-        # get mean value of bin
-        bin_centers = [interval.mid for interval in binned_means.index]
-
-        plt.figure(figsize=(8, 5))
-        plt.bar(bin_centers, binned_means, width=(bin_centers[1] - bin_centers[0]) * 0.8)
-        plt.xlabel(col_x_index)
-        plt.ylabel(f"Mean of {col_y_index}")
-        plt.title(f"{col_y_index} vs {col_x_index} (binned into {bins} intervals)")
-        plt.grid(axis="y", linestyle="--", alpha=0.6)
-        plt.tight_layout()
-        plt.show()
-

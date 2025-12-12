@@ -1,8 +1,8 @@
-from .utils import Visualizer, TimestampConvertToDatetime, CSVNaNReplacer
+from .utils import Visualizer, TimestampConvertToDatetime, CSVNaNReplacer, RandomSegmentPicker
 from .create_chords_and_melody import CreateChordsAndMelody
 from .data_loader import DataLoader
 from .safecast_loader import SafecastLoader
-from .stumpy_pattern_mining import TimeSeriesPatternMiner
+from .time_series_pattern_analyzer import TimeSeriesPatternAnalyzer
 from .dataframe_selector import DataFrameSelector
 from .convert_element_to_aspect import ConvertElementToAspect
 from .suno_music_generator import SunoMusicGenerator
@@ -15,6 +15,7 @@ __all__ = [
     "CSVNaNReplacer", 
     "DataLoader", 
     "SafecastLoader", 
+    "RandomSegmentPicker",
     "TimeSeriesPatternMiner", 
     "DataFrameSelector", 
     "ConvertElementToAspect", 

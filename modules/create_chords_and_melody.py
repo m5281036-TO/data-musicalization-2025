@@ -54,7 +54,8 @@ class CreateChordsAndMelody:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.output_dir = os.path.join(file_save_path, timestamp)
 
-    def create_midi_and_wav(self, valence_array, arousal_array) -> str:
+
+    def create_midi_and_wav(self, valence, arousal, idx) -> str:
         """
         Generate MIDI sequences and WAV audio from valence and arousal arrays.
 
@@ -141,110 +142,120 @@ class CreateChordsAndMelody:
         modeset = create_modeset()
 
         # Generate MIDI and WAV for each valence-arousal data point
-        for idx in range(len(valence_array)):
-            mid = MidiFile()
-            track = MidiTrack()
-            mid.tracks.append(track)
+        mid = MidiFile()
+        track = MidiTrack()
+        mid.tracks.append(track)
 
-            # Set fixed tempo
-            tempo = bpm2tempo(self.BASE_BPM)
-            track.append(MetaMessage('set_tempo', tempo=tempo, time=0))
+        # Set fixed tempo
+        tempo = bpm2tempo(self.BASE_BPM)
+        track.append(MetaMessage('set_tempo', tempo=tempo, time=0))
 
-            # Normalize valence and arousal to [0, 1]
-            valence_norm = (valence_array[idx] + 100) / 200
-            arousal_norm = max(arousal_array[idx] / 100, 0.1)
+        # Normalize valence and arousal to [0, 1]
+        valence_norm = (valence + 100) / 200
+        arousal_norm = max(arousal / 100, 0.1)
 
-            # Determine musical mode and other musical parameters
-            mode = 6 - round(valence_norm * 6)
-            roughness = 1 - arousal_norm
-            velocity = arousal_norm
-            voicing = valence_norm
-            loudness = round(arousal_norm * 10) / 10 * 40 + 60
+        # Determine musical mode and other musical parameters
+        mode = 6 - round(valence_norm * 6)
+        roughness = 1 - arousal_norm
+        velocity = arousal_norm
+        voicing = valence_norm
+        loudness = round(arousal_norm * 10) / 10 * 40 + 60
 
-            # Generate 4-bar loop per data point
-            for seq in range(self.BARS_TO_EACH_POINT):
-                activate1 = np.where(np.random.rand(8) < roughness, 0, 1)
-                activate2 = np.where(np.random.rand(8) < roughness, 0, 1)
-                bright = np.zeros(6)
-                for i in range(6):
-                    if voicing < 0.5:
-                        bright[i] = -1 if np.random.rand() > voicing * 2 else 0
-                    else:
-                        bright[i] = 1 if np.random.rand() < (voicing - 0.5) * 2 else 0
+        # Generate 4-bar loop per data point
+        for seq in range(self.BARS_TO_EACH_POINT):
+            activate1 = np.where(np.random.rand(8) < roughness, 0, 1)
+            activate2 = np.where(np.random.rand(8) < roughness, 0, 1)
+            bright = np.zeros(6)
+            for i in range(6):
+                if voicing < 0.5:
+                    bright[i] = -1 if np.random.rand() > voicing * 2 else 0
+                else:
+                    bright[i] = 1 if np.random.rand() < (voicing - 0.5) * 2 else 0
 
-                # --- Generate chord notes --- #
-                for i in range(3):
-                    note = int(modeset[seq, i + 1, mode] + bright[i] * 12)
+            # --- Generate chord notes --- #
+            for i in range(3):
+                note = int(modeset[seq, i + 1, mode] + bright[i] * 12)
+                vel = random.randint(self.MIN_LOUDNESS, int(loudness))
+                track.append(Message('note_on', channel=0, note=note, velocity=vel, time=0))
+
+            # --- Generate bass notes --- #
+            base_note = int(modeset[seq, 1, mode] - (12 if voicing > 0.5 else 24))
+            vel = random.randint(self.MIN_LOUDNESS, int(loudness))
+            track.append(Message('note_on', channel=0, note=base_note, velocity=vel, time=0))
+
+            # --- Generate melody notes --- #
+            for tone in range(8):
+                delay = int((0.3 - velocity * 0.15) * mid.ticks_per_beat * 2)
+
+                if activate1[tone] == 1:
+                    note = int(modeset[seq, 1, mode] + bright[4] * 12)
                     vel = random.randint(self.MIN_LOUDNESS, int(loudness))
                     track.append(Message('note_on', channel=0, note=note, velocity=vel, time=0))
+                    track.append(Message('note_off', channel=0, note=note, velocity=vel, time=delay))
 
-                # --- Generate bass notes --- #
-                base_note = int(modeset[seq, 1, mode] - (12 if voicing > 0.5 else 24))
-                vel = random.randint(self.MIN_LOUDNESS, int(loudness))
-                track.append(Message('note_on', channel=0, note=base_note, velocity=vel, time=0))
-
-                # --- Generate melody notes --- #
-                for tone in range(8):
-                    delay = int((0.3 - velocity * 0.15) * mid.ticks_per_beat * 2)
-
-                    if activate1[tone] == 1:
-                        note = int(modeset[seq, 1, mode] + bright[4] * 12)
-                        vel = random.randint(self.MIN_LOUDNESS, int(loudness))
-                        track.append(Message('note_on', channel=0, note=note, velocity=vel, time=0))
-                        track.append(Message('note_off', channel=0, note=note, velocity=vel, time=delay))
-
-                    if activate2[tone] == 1:
-                        idx2 = np.random.randint(2, 4)
-                        note = int(modeset[seq, idx2, mode] + bright[5] * 12)
-                        vel = random.randint(self.MIN_LOUDNESS, int(loudness))
-                        track.append(Message('note_on', channel=0, note=note, velocity=vel, time=0))
-                        track.append(Message('note_off', channel=0, note=note, velocity=vel, time=delay))
+                if activate2[tone] == 1:
+                    idx2 = np.random.randint(2, 4)
+                    note = int(modeset[seq, idx2, mode] + bright[5] * 12)
+                    vel = random.randint(self.MIN_LOUDNESS, int(loudness))
+                    track.append(Message('note_on', channel=0, note=note, velocity=vel, time=0))
+                    track.append(Message('note_off', channel=0, note=note, velocity=vel, time=delay))
 
             # --- Save MIDI file --- #
             os.makedirs(self.output_dir, exist_ok=True)
-            file_name = f"melody_{idx+1}_val{valence_array[idx]}_aro{arousal_array[idx]}.mid"
+            file_name = f"melody_{idx}_val{valence}_aro{arousal}.mid"
             midi_path = os.path.join(self.output_dir, file_name)
             mid.save(midi_path)
             print(f"MIDI file saved: {midi_path}")
-
-            # --- Convert MIDI to WAV --- #
-            def midi_to_wav(midi_path):
-                """
-                Convert a MIDI file into a WAV file using simple sine wave synthesis.
-
-                Parameters
-                ----------
-                midi_path : str
-                    Path to the MIDI file to convert.
-                """
-                mid = MidiFile(midi_path)
-                time_accum = 0.0
-                audio = np.zeros(int(mid.length * self.sample_rate))
-
-                for msg in mid.play():
-                    time_accum += msg.time
-                    if msg.type == 'note_on' and msg.velocity > 0:
-                        duration = 0.5
-                        start_sample = int(time_accum * self.sample_rate)
-                        end_sample = int((time_accum + duration) * self.sample_rate)
-                        if end_sample > len(audio):
-                            end_sample = len(audio)
-                        wave_duration = end_sample - start_sample
-                        t = np.linspace(0, duration, wave_duration, False)
-                        freq = 440.0 * 2 ** ((msg.note - 69) / 12.0)
-                        wave = 0.2 * np.sin(2 * np.pi * freq * t)
-                        if len(wave) < wave_duration:
-                            wave = np.pad(wave, (0, wave_duration - len(wave)))
-                        audio[start_sample:end_sample] += wave
-
-                # Normalize and save
-                audio = np.int16(audio / np.max(np.abs(audio)) * 32767)
-                wave_path = os.path.join(
-                    self.output_dir,
-                    f"melody_{idx+1}_val{valence_array[idx]}_aro{arousal_array[idx]}.wav"
-                )
-                write(wave_path, self.sample_rate, audio)
-                print(f"WAV file saved as {wave_path}")
-
-            midi_to_wav(midi_path)
         return self.output_dir
+    
+    # --- Convert MIDI to WAV --- #
+    def midi_to_wav(self, midi_path, valence, arousal, idx):
+        """
+        Convert a MIDI file into a WAV file using simple sine wave synthesis.
+
+        Parameters
+        ----------
+        midi_path : str
+            Path to the MIDI file to convert.
+        """
+        mid = MidiFile(midi_path)
+        time_accum = 0.0
+        audio = np.zeros(int(mid.length * self.sample_rate))
+
+        for msg in mid.play():
+            time_accum += msg.time
+            if msg.type == 'note_on' and msg.velocity > 0:
+                duration = 0.5
+                start_sample = int(time_accum * self.sample_rate)
+                end_sample = int((time_accum + duration) * self.sample_rate)
+                if end_sample > len(audio):
+                    end_sample = len(audio)
+                wave_duration = end_sample - start_sample
+                t = np.linspace(0, duration, wave_duration, False)
+                freq = 440.0 * 2 ** ((msg.note - 69) / 12.0)
+                wave = 0.2 * np.sin(2 * np.pi * freq * t)
+                if len(wave) < wave_duration:
+                    wave = np.pad(wave, (0, wave_duration - len(wave)))
+                audio[start_sample:end_sample] += wave
+
+        # Normalize and save
+        audio = np.int16(audio / np.max(np.abs(audio)) * 32767)
+        wave_path = os.path.join(
+            self.output_dir,
+            f"melody_{idx}_val{valence}_aro{arousal}.wav"
+        )
+        write(wave_path, self.sample_rate, audio)
+        print(f"WAV file saved as {wave_path}")
+
+
+
+if __name__ == "__main__":
+    valence_array = [-100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100]
+    arousal_array = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    c = CreateChordsAndMelody()
+    idx = 1
+    for v in range(len(valence_array)):
+        for a in range(len(arousal_array)):
+            c.create_midi_and_wav(valence_array[v], arousal_array[a], idx)
+            idx += 1
+    

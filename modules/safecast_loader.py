@@ -12,7 +12,7 @@ class SafecastLoader:
 
     BASE_URL = "https://api.safecast.org/en-US/measurements.json"
 
-    def __init__(self, time_sort: bool=False, timestamp_index_name: str=None, page_limit: int = 40, max_retries: int = 3, retry_delay: int = 5):
+    def __init__(self, time_sort: bool=False, timestamp_index_name: str=None, page_limit: int = 3, max_retries: int = 3, retry_delay: int = 5):
         """
         Initialize the SafecastLoader.
 
@@ -31,13 +31,13 @@ class SafecastLoader:
         self.max_retries = max_retries
         self.retry_delay = retry_delay
 
-    def fetch_device_data(self, device_id, date_from="2011-01-01", date_to="2022-12-31", limit: int = 1000):
+    def fetch_device_data(self, user_id, date_from="2011-01-01", date_to="2025-12-31", limit: int = 1000):
         """
         Fetch measurement data for a given device within a defined time window.
 
         Parameters
         ----------
-        device_id : int
+        user_id : int
             The unique ID of the Safecast device (can be found in the API data).
         date_from : str
             Start date (ISO format: YYYY-MM-DD).
@@ -54,11 +54,11 @@ class SafecastLoader:
         df = []
         page = 1
 
-        print(f"Fetching data for device_id={device_id} from {date_from} to {date_to} ...")
+        print(f"Fetching data for user_id={user_id} from {date_from} to {date_to} ...")
 
         for _ in range(self.page_limit):
             params = {
-                "device_id": device_id,
+                "user_id": user_id,
                 "captured_after": date_from,
                 "captured_before": date_to,
                 "page": page,
