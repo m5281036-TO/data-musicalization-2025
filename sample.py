@@ -69,7 +69,16 @@ def main():
         df_random_7.to_csv(f"./data/cache/df_random_7_{idx+1}.csv")
         print(df_random_7)
         visualizer = Visualizer(df_random_7, df_random_7)
-        visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="value1", value_index2="value2")
+        visualizer.plot_time_series(
+            col_timestamp_index="captured_at", 
+            value_index1="value1", 
+            value_index2="value2", 
+            isSave=True, 
+            output_dir=f"./data/cache/", 
+            filename=f"df_random_7_{idx+1}.png"
+            )
+        
+    return 0
     
     
     # # ========================================
