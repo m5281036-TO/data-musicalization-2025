@@ -5,7 +5,8 @@ import requests
 import http.client
 
 class SunoMusicGenerator:
-    def __init__(self, config_path="./config/suno_api_config.json"):
+    def __init__(self, style, config_path="./config/suno_api_config.json"):
+        self.style = style
         try:
             with open(config_path, "r") as f:
                 config = json.load(f)
@@ -25,13 +26,13 @@ class SunoMusicGenerator:
 
         
 
-    def generate_music(self, prompt, style, upload_url):
+    def generate_music(self, prompt, upload_url):
         conn = http.client.HTTPSConnection("apibox.erweima.ai")
         payload = json.dumps({
             "uploadUrl": upload_url,
             "prompt": prompt,
-            "style": style,
-            "title": style + " " + prompt,
+            "style": self.style,
+            "title": self.style + " " + prompt,
             "customMode": True,
             "instrumental": True,
             "model": "V3_5",
@@ -86,8 +87,8 @@ class SunoMusicGenerator:
         """
         Download the generated music file and save it locally as an MP3.
         """
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        output_dir = os.path.join(file_save_path, timestamp)
+        timestamp = time.strftime("%Y%m%d_")
+        output_dir = os.path.join(file_save_path, timestamp, self.style)
         
         # Ensure the full directory path exists (including timestamped subfolder)
         os.makedirs(output_dir, exist_ok=True)

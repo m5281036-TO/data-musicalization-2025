@@ -7,6 +7,7 @@ from .dataframe_selector import DataFrameSelector
 from .convert_element_to_aspect import ConvertElementToAspect
 from .suno_music_generator import SunoMusicGenerator
 from .valence_arousal_to_emotion import ValenceArousalToEmotion
+from .crossfade_audio_files import CrossfadeAudioFiles
 
 __all__ = [
     "Visualizer", 
@@ -22,5 +23,6 @@ __all__ = [
     "SunoMusicGenerator", 
     "ValenceArousalToEmotion",
     "FilterCommonTimestampRange",
-    "TimeAlignedDataMerger"
+    "TimeAlignedDataMerger",
+    "CrossfadeAudioFiles"
     ]

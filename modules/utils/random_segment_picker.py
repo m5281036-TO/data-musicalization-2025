@@ -8,7 +8,16 @@ class RandomSegmentPicker:
         self.num_rows = num_rows
         
 
-    def pick_random_segment(self) -> pd.DataFrame:
+    def pick_random_segment(self, isNormalized: bool = False) -> pd.DataFrame:
         start = np.random.randint(1, len(self.df) - self.num_rows)
-        subset = self.df.iloc[start:start + self.num_rows]
+        subset = self.df.iloc[start:start + self.num_rows].copy()
+
+        if isNormalized:
+            numeric_cols = subset.select_dtypes(include=[np.number]).columns
+            subset[numeric_cols] = (
+                subset[numeric_cols] - subset[numeric_cols].min()
+            ) / (
+                subset[numeric_cols].max() - subset[numeric_cols].min()
+            )
+
         return subset

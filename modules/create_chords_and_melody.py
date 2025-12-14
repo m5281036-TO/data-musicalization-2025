@@ -250,8 +250,8 @@ class CreateChordsAndMelody:
 
 
 if __name__ == "__main__":
-    valence_array = [-100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100]
-    arousal_array = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    valence_array = [-100, -90, -80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    arousal_array = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
     c = CreateChordsAndMelody()
     idx = 1
     for v in range(len(valence_array)):

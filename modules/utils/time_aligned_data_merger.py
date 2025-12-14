@@ -32,5 +32,6 @@ class TimeAlignedDataMerger:
         merged = pd.concat([df1_q, df2_q], axis=1)
 
         merged = merged.interpolate(method="linear")
-
+        
+        merged = merged.reset_index()
         return merged

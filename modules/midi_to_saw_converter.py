@@ -84,5 +84,5 @@ class MidiToSawWavConverter:
 
 
 if __name__ == "__main__":
-    m = MidiToSawWavConverter(input_folder='./data/output/generated_melody/20251212_163639/', output_folder = './data/output/generated_melody/20251212_163639/saw/')
+    m = MidiToSawWavConverter(input_folder='./data/output/generated_melody/20251212_170238/', output_folder = './data/output/generated_melody/20251212_170238/saw/')
     m.convert_all()

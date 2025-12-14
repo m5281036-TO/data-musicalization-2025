@@ -1,5 +1,6 @@
-from modules import Visualizer, TimestampConvertToDatetime, CreateChordsAndMelody, DataLoader, SafecastLoader, TimeSeriesPatternAnalyzer, DataFrameSelector, ConvertElementToAspect, RandomSegmentPicker, SunoMusicGenerator, ValenceArousalToEmotion, FilterCommonTimestampRange, TimeAlignedDataMerger
+from modules import Visualizer, TimestampConvertToDatetime, CreateChordsAndMelody, DataLoader, SafecastLoader, TimeSeriesPatternAnalyzer, DataFrameSelector, ConvertElementToAspect, RandomSegmentPicker, SunoMusicGenerator, ValenceArousalToEmotion, FilterCommonTimestampRange, TimeAlignedDataMerger, CrossfadeAudioFiles
 import pandas as pd
+import time
 
 def main():
     # ========================================
@@ -64,11 +65,11 @@ def main():
     picker = RandomSegmentPicker(df_merged, num_rows=7)
     
     for idx in range(10): 
-        df_random_7 = picker.pick_random_segment()
+        df_random_7 = picker.pick_random_segment(isNormalized=True)
         df_random_7.to_csv(f"./data/cache/df_random_7_{idx+1}.csv")
         print(df_random_7)
-        # visualizer = Visualizer(df_random_7, df_random_7)
-        # visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="value1", value_index2="value2")
+        visualizer = Visualizer(df_random_7, df_random_7)
+        visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="value1", value_index2="value2")
     
     
     # # ========================================
@@ -113,6 +114,7 @@ def main():
     emotion_list = e.convert_valence_arousal_to_emotion()
 
     print(emotion_list)
+    return 0
     
     
     # ========================================
@@ -123,14 +125,39 @@ def main():
     
     # ========================================
     # connect SUNO API and generate music
-    # ========================================    
+    # ======================================== 
     style = 'Electronic Music'
+    suno_generator = SunoMusicGenerator(style=style)
     upload_url_base = 'https://audio-eval-2025-05.web.app/experiment_stimuli_1212/'
-    upload_filenames = ["melody_1_val-100_aro0", "melody_2_val-100_aro65", "melody_3_val-20_aro65", "melody_4_val20_aro100", "melody_5_val100_aro100", "melody_6_val-20_aro100", "melody_7_val100_aro15"]
+    task_ids = []
+    upload_filenames = []
+
+    for _ in range(2):
+        for idx in range(len(emotion_list[0])):
+            upload_filename = f"melody_val{valence_list[idx][idx]}_aro{arousal_list[idx][idx]}.wav"
+            upload_filenames.append(upload_filename)
+            text_prompt = emotion_list[idx][idx]
+            upload_url = f"{upload_url_base}{upload_filename}"
+            print(upload_url, text_prompt)
+            
+            # create tasks
+            task_ids.append(suno_generator.generate_music(text_prompt, upload_url))
+            time.sleep(0.8) # in order to avoid API rate limitation
+        
+        print(idx)
+
+    
+    # actually download tracks when finished
+    for idx, task_id in enumerate(task_ids):
+        audio_url = suno_generator.poll_suno_task(task_id, interval=15)
+        downloaded_filename = suno_generator.download_tracks(audio_url, download_filename=f"{idx+1}_{upload_filenames[idx]}")
+        print(f"{downloaded_filename} downloaded")
+
+    # ["melody_1_val-100_aro0", "melody_2_val-100_aro65", "melody_3_val-20_aro65", "melody_4_val20_aro100", "melody_5_val100_aro100", "melody_6_val-20_aro100", "melody_7_val100_aro15"]
+    
+    return 0
 
     # generate tasks
-    suno_generator = SunoMusicGenerator()
-    task_ids = []
     for idx, emotion_param in enumerate(emotion_list):
         upload_url = f"{upload_url_base}{upload_filenames[idx]}.mp3"
         task_ids.append(suno_generator.generate_music(emotion_param, style, upload_url))
