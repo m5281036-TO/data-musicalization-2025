@@ -146,9 +146,9 @@ class ConvertElementToAspect:
 
         if isInverted:
             valence_array = [val * (-1) for val in valence_array]
-            print(f"'{element_name}' [{max_thresh}, {min_thresh}] is mapped to 'valence [-100, 100]' (inverted)")
+            print(f"'{element_name}' [{min_thresh}, {max_thresh}] is mapped to 'valence [-100, 100]' (inverted)")
         else:
-            print(f"'{element_name}' [{max_thresh}, {min_thresh}] is mapped to 'valence [-100, 100]'")
+            print(f"'{element_name}' [{min_thresh}, {max_thresh}] is mapped to 'valence [-100, 100]'")
 
         return valence_array
 

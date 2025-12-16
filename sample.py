@@ -3,6 +3,11 @@ import pandas as pd
 import time
 
 def main():
+    SYSTEM_DATE = time.strftime("%Y_%m%d") # used to generate directory timestamp-based path
+    print(SYSTEM_DATE)
+    
+    NUM_SEGMENT_IN_SECTION = 7
+    
     # ========================================
     # load files online or on local
     # ========================================
@@ -62,9 +67,9 @@ def main():
     # ========================================
     # pick random continous segments
     # ========================================
-    picker = RandomSegmentPicker(df_merged, num_rows=7)
+    picker = RandomSegmentPicker(df_merged, num_rows=NUM_SEGMENT_IN_SECTION)
     
-    for idx in range(10): 
+    for idx in range(3): 
         df_random_7 = picker.pick_random_segment(isNormalized=True)
         df_random_7.to_csv(f"./data/cache/df_random_7_{idx+1}.csv")
         print(df_random_7)
@@ -77,8 +82,6 @@ def main():
             output_dir=f"./data/cache/", 
             filename=f"df_random_7_{idx+1}.png"
             )
-        
-    return 0
     
     
     # # ========================================
@@ -107,9 +110,9 @@ def main():
     valence_list = []
     arousal_list = []
     emotion_list = []
-    for idx in range(10):
-        random_segment_path = f"./data/cache/df_random_7_{idx+1}.csv"
-        df_random_7 = pd.read_csv(random_segment_path)        
+    for idx in range(3):
+        random_segment_path = f"./data/cache/1215_05/df_random_7_{idx+1}.csv"
+        df_random_7 = pd.read_csv(random_segment_path)
         element_converter = ConvertElementToAspect(df_random_7)
 
         # convert valence [-100, 100]
@@ -117,13 +120,12 @@ def main():
         # convert valence [0, 100]
         arousal_list.append(element_converter.convert_element_to_arousal('value2', min_thresh=df_random_7["value2"].min(), max_thresh=df_random_7["value2"].max()))
             
-    print(f"valence_list: {valence_list}\n arousal_list: {arousal_list}")
+    print(f"\nvalence_list: {valence_list}\n arousal_list: {arousal_list}")
     
     e = ValenceArousalToEmotion(valence_list, arousal_list)
     emotion_list = e.convert_valence_arousal_to_emotion()
 
     print(emotion_list)
-    return 0
     
     
     # ========================================
@@ -141,11 +143,11 @@ def main():
     task_ids = []
     upload_filenames = []
 
-    for _ in range(2):
-        for idx in range(len(emotion_list[0])):
-            upload_filename = f"melody_val{valence_list[idx][idx]}_aro{arousal_list[idx][idx]}.wav"
+    for idx_row in range(len(emotion_list)):
+        for idx_col in range(len(emotion_list[0])):
+            upload_filename = f"melody_val{valence_list[idx_row][idx_col]}_aro{arousal_list[idx_row][idx_col]}.wav"
             upload_filenames.append(upload_filename)
-            text_prompt = emotion_list[idx][idx]
+            text_prompt = emotion_list[idx_row][idx_col]
             upload_url = f"{upload_url_base}{upload_filename}"
             print(upload_url, text_prompt)
             
@@ -158,26 +160,10 @@ def main():
     
     # actually download tracks when finished
     for idx, task_id in enumerate(task_ids):
-        audio_url = suno_generator.poll_suno_task(task_id, interval=15)
+        audio_url = suno_generator.poll_suno_task(task_id, interval=30)
         downloaded_filename = suno_generator.download_tracks(audio_url, download_filename=f"{idx+1}_{upload_filenames[idx]}")
         print(f"{downloaded_filename} downloaded")
 
-    # ["melody_1_val-100_aro0", "melody_2_val-100_aro65", "melody_3_val-20_aro65", "melody_4_val20_aro100", "melody_5_val100_aro100", "melody_6_val-20_aro100", "melody_7_val100_aro15"]
-    
-    return 0
-
-    # generate tasks
-    for idx, emotion_param in enumerate(emotion_list):
-        upload_url = f"{upload_url_base}{upload_filenames[idx]}.mp3"
-        task_ids.append(suno_generator.generate_music(emotion_param, style, upload_url))
-        if idx == 10: # fail safe not to consume API resources
-            break
-    print(f"{len(task_ids)} task(s) processing: {task_ids}")
-    # download generated tracks
-    for idx, task_id in enumerate(task_ids):
-        audio_url = suno_generator.poll_suno_task(task_id)
-        downloaded_filename = suno_generator.download_tracks(audio_url, upload_filenames[idx])
-        print(f"{downloaded_filename} downloaded")
 
 if __name__ == "__main__":
     main()

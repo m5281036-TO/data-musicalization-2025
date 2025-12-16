@@ -48,4 +48,4 @@ class CrossfadeAudioFiles:
 
 if __name__ == "__main__":
     fader = CrossfadeAudioFiles()
-    fader.crossfade_audio_files(input_path="./data/output/generated_music_suno/20251212_electronic/seg_2")
+    fader.crossfade_audio_files(input_path="./data/output/generated_music_suno/20251215_03/")
