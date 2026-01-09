@@ -39,7 +39,7 @@ class Visualizer:
         value_index2: str,
         isSave: bool = False,
         output_dir: str = None,
-        filename: str = "time_series.png",
+        filename: str = "time_series.pdf",
     ):
         """
         Plot values from two DataFrames on the same timestamp range.
@@ -74,6 +74,8 @@ class Visualizer:
 
         plt.title("Time Series Comparison (Overlapping Interval Only)")
         plt.xlabel("Timestamp")
+        plt.xticks(rotation=70)
+        plt.tight_layout()
         plt.ylabel("Value")
         plt.grid(True)
         plt.legend(loc="best")

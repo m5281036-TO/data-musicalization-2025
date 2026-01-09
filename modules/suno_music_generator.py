@@ -28,6 +28,7 @@ class SunoMusicGenerator:
 
     def generate_music(self, prompt, upload_url):
         conn = http.client.HTTPSConnection("apibox.erweima.ai")
+
         payload = json.dumps({
             "uploadUrl": upload_url,
             "prompt": prompt,
@@ -38,14 +39,21 @@ class SunoMusicGenerator:
             "model": "V3_5",
             "callBackUrl": "https://api.example.com/callback"
         })
-        print(f"Prompt: {prompt}, Melody: {upload_url},")
+
         conn.request("POST", "/api/v1/generate/upload-cover", payload, self.headers)
-        response_json = conn.getresponse()
-        json_str = response_json.read()
-        data_dict = json.loads(json_str)
-        print(data_dict)
+        response = conn.getresponse()
+
+        raw = response.read().decode("utf-8")
+        print("HTTP status:", response.status)
+        print("Raw response:", raw)
+
+        if response.status != 200:
+            raise RuntimeError(f"API error {response.status}: {raw}")
+
+        data_dict = json.loads(raw)
         task_id = data_dict["data"]["taskId"]
         return task_id
+
     
 
     def poll_suno_task(self, task_id, timeout=600, interval=60):

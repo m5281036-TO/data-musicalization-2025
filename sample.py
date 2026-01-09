@@ -55,54 +55,35 @@ def main():
     filter = FilterCommonTimestampRange(df1, df2)
     df1_filtered, df2_filtered = filter.filter_common_timestamp_range(col_timestamp_index1="captured_at", col_timestamp_index2="captured_at")
     
-    visualizer = Visualizer(df1_filtered, df2_filtered)
-    visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="value", value_index2="value")
-    
     # merge 2 filtered dataframes
     time_merger = TimeAlignedDataMerger()
     df_merged = time_merger.merge(df1_filtered, "captured_at", df2_filtered, "captured_at")
     df_merged.to_csv("./data/output/csv/df_merged.csv")
     print(df_merged)
     
+    visualizer = Visualizer(df_merged, df_merged)
+    visualizer.plot_time_series(col_timestamp_index="captured_at", value_index1="data1", value_index2="data2", isSave=True, output_dir="./data/cache/")
+
+    
     # ========================================
     # pick random continous segments
     # ========================================
     picker = RandomSegmentPicker(df_merged, num_rows=NUM_SEGMENT_IN_SECTION)
     
-    for idx in range(3): 
+    for idx in range(2): 
         df_random_7 = picker.pick_random_segment(isNormalized=True)
         df_random_7.to_csv(f"./data/cache/df_random_7_{idx+1}.csv")
         print(df_random_7)
         visualizer = Visualizer(df_random_7, df_random_7)
         visualizer.plot_time_series(
             col_timestamp_index="captured_at", 
-            value_index1="value1", 
-            value_index2="value2", 
+            value_index1="data1", 
+            value_index2="data2", 
             isSave=True, 
             output_dir=f"./data/cache/", 
             filename=f"df_random_7_{idx+1}.png"
             )
-    
-    
-    # # ========================================
-    # # Run through pattern miner (stumpy)
-    # # ========================================
-    # analyzer = TimeSeriesPatternAnalyzer(df1_filtered, df2_filtered)
-
-    # # Extract overlapping interval → resample
-    # ts1, ts2 = analyzer.resample_and_align(
-    #     col_timestamp="captured_at",
-    #     col_value1="value",
-    #     col_value2="value",
-    #     freq="30S",
-    #     method="interpolate"
-    # )
-    # # STUMPY cross matrix profile
-    # window = 50
-    # profile = analyzer.compute_cross_matrix_profile(ts1, ts2, window_size=window)
-
-    # print(profile)
-    
+        
     
     # ========================================
     # convert values in rows to musical aspect (2 rows)
@@ -110,23 +91,44 @@ def main():
     valence_list = []
     arousal_list = []
     emotion_list = []
-    for idx in range(3):
-        random_segment_path = f"./data/cache/1215_05/df_random_7_{idx+1}.csv"
+
+    for idx in range(2):
+        random_segment_path = f"./data/cache/df_random_7_{idx+1}.csv"
         df_random_7 = pd.read_csv(random_segment_path)
+
         element_converter = ConvertElementToAspect(df_random_7)
 
-        # convert valence [-100, 100]
-        valence_list.append(element_converter.convert_element_to_valence('value1', min_thresh=df_random_7["value1"].min(), max_thresh=df_random_7["value1"].max()))
-        # convert valence [0, 100]
-        arousal_list.append(element_converter.convert_element_to_arousal('value2', min_thresh=df_random_7["value2"].min(), max_thresh=df_random_7["value2"].max()))
-            
-    print(f"\nvalence_list: {valence_list}\n arousal_list: {arousal_list}")
-    
-    e = ValenceArousalToEmotion(valence_list, arousal_list)
-    emotion_list = e.convert_valence_arousal_to_emotion()
+        # 各行分の valence / arousal を生成
+        valence_array = element_converter.convert_element_to_valence(
+            'data1',
+            min_thresh=df_random_7["data1"].min(),
+            max_thresh=df_random_7["data1"].max()
+        )
 
+        arousal_array = element_converter.convert_element_to_arousal(
+            'data2',
+            min_thresh=df_random_7["data2"].min(),
+            max_thresh=df_random_7["data2"].max()
+        )
+
+        # DataFrame の「最後の列」として追加
+        df_random_7["valence"] = valence_array
+        df_random_7["arousal"] = arousal_array
+
+        # 集計用（必要な場合）
+        valence_list.append(valence_array)
+        arousal_list.append(arousal_array)
+        emotion_list.append(emotion_list)
+
+        # CSV に保存（上書き or 別名保存）
+        df_random_7.to_csv(random_segment_path, index=False)
+
+    print(f"\nvalence_list: {valence_list}\n arousal_list: {arousal_list}")
+    e = ValenceArousalToEmotion(valence_list, arousal_list)
+    emotion_list = e.convert_valence_arousal_to_emotion() 
     print(emotion_list)
-    
+    print(len(emotion_list))
+
     
     # ========================================
     # create chords and melody from specified valence-arousal coordinates
@@ -139,13 +141,13 @@ def main():
     # ======================================== 
     style = 'Electronic Music'
     suno_generator = SunoMusicGenerator(style=style)
-    upload_url_base = 'https://audio-eval-2025-05.web.app/experiment_stimuli_1212/'
+    upload_url_base = 'https://audio-eval-2025-05.web.app/melody_database/'
     task_ids = []
     upload_filenames = []
 
     for idx_row in range(len(emotion_list)):
         for idx_col in range(len(emotion_list[0])):
-            upload_filename = f"melody_val{valence_list[idx_row][idx_col]}_aro{arousal_list[idx_row][idx_col]}.wav"
+            upload_filename = f"melody_val{valence_list[idx_row][idx_col]}_aro{arousal_list[idx_row][idx_col]}.mp3"
             upload_filenames.append(upload_filename)
             text_prompt = emotion_list[idx_row][idx_col]
             upload_url = f"{upload_url_base}{upload_filename}"
@@ -153,10 +155,11 @@ def main():
             
             # create tasks
             task_ids.append(suno_generator.generate_music(text_prompt, upload_url))
-            time.sleep(0.8) # in order to avoid API rate limitation
+            time.sleep(2) # in order to avoid API rate limitation
         
-        print(idx)
-
+        print(f"task no. {idx}")
+        time.sleep(20) # in order to avoid API rate limitation
+        
     
     # actually download tracks when finished
     for idx, task_id in enumerate(task_ids):
@@ -167,4 +170,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

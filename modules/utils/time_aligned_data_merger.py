@@ -26,8 +26,8 @@ class TimeAlignedDataMerger:
         df2: pd.DataFrame,
         df2_timestamp_idx_name: str,
     ):
-        df1_q = self._prepare(df1, timestamp_idx_name=df1_timestamp_idx_name, value_name="value1")
-        df2_q = self._prepare(df2, timestamp_idx_name=df2_timestamp_idx_name, value_name="value2")
+        df1_q = self._prepare(df1, timestamp_idx_name=df1_timestamp_idx_name, value_name="data1")
+        df2_q = self._prepare(df2, timestamp_idx_name=df2_timestamp_idx_name, value_name="data2")
 
         merged = pd.concat([df1_q, df2_q], axis=1)
 
