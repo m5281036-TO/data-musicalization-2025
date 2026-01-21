@@ -18,7 +18,7 @@ The repository includes source code, generated audio samples, and supporting mat
 ---
 
 ## Repository Structure
-
+```bash
 data-musicalization-2025/
 ├── modules/ # Core implementation modules for data musicalization
 ├── data/
@@ -28,6 +28,7 @@ data-musicalization-2025/
 ├── notebooks/ # Jupyter notebooks for running and playing samples
 ├── requirements.txt # Python dependencies
 └── README.md
+```
 
 ---
 
