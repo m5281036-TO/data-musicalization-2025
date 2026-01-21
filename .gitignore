@@ -3,4 +3,5 @@
 # venv
 /data-musicalization-venv/
 /data/output/
+/data/cache/
 /src/config/config.json

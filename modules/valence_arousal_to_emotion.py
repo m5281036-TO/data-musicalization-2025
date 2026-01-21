@@ -1,33 +1,42 @@
 class ValenceArousalToEmotion:
     
-    def __init__(self, valence_array, arousal_array):
-        self.valence_array = valence_array
-        self.arousal_array = arousal_array
+    def __init__(self, valence_matrix, arousal_matrix):
+        """
+        valence_matrix, arousal_matrix:
+            2 次元配列（list of lists、または同等の構造）を受け取る
+        """
+        self.valence_matrix = valence_matrix
+        self.arousal_matrix = arousal_matrix
         
-        
-    def convert_valencea_arousal_to_emotion(self):
-        emotion_array = []
-        
-        for valence, arousal in zip (self.valence_array, self.arousal_array):
-            intensify = ""
-            if valence >= 60 or valence <= -60 or arousal >=80 or arousal <= 20:
-                intensify = "extremely "
+    def convert_valence_arousal_to_emotion(self):
+        emotion_matrix = []
 
-            if valence > 0:
-                if arousal >= 50:
-                    emotion = "happy and joyful"
-                elif arousal < 50: 
-                    emotion = "contentment"
-            if valence < 0:
+        for valence_row, arousal_row in zip(self.valence_matrix, self.arousal_matrix):
+            row_result = []
+            for valence, arousal in zip(valence_row, arousal_row):
+
+                intensify = ""
+                if valence >= 60 or valence <= -60 or arousal >= 80 or arousal <= 20:
+                    intensify = "extremely "
+
+                if valence > 0:
                     if arousal >= 50:
-                        emotion = "angery or fearful"
-                    elif arousal < 50: 
+                        emotion = "happy"
+                    else:
+                        emotion = "content"
+                elif valence < 0:
+                    if arousal >= 50:
+                        emotion = "fearful"
+                    else:
                         emotion = "sad"
-            elif valence == 0:
+                else:
                     if arousal == 0:
                         emotion = "neutral emotion"
-            emotion_array.append(f"{intensify}{emotion}")
-        
-        
-        print(emotion_array)
-        return emotion_array
+                    else:
+                        emotion = "neutral emotion"
+
+                row_result.append(f"{intensify}{emotion}")
+
+            emotion_matrix.append(row_result)
+
+        return emotion_matrix

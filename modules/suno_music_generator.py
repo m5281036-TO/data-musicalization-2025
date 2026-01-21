@@ -5,7 +5,8 @@ import requests
 import http.client
 
 class SunoMusicGenerator:
-    def __init__(self, config_path="./config/suno_api_config.json"):
+    def __init__(self, style, config_path="./config/suno_api_config.json"):
+        self.style = style
         try:
             with open(config_path, "r") as f:
                 config = json.load(f)
@@ -25,26 +26,34 @@ class SunoMusicGenerator:
 
         
 
-    def generate_music(self, prompt, style, upload_url):
+    def generate_music(self, prompt, upload_url):
         conn = http.client.HTTPSConnection("apibox.erweima.ai")
+
         payload = json.dumps({
             "uploadUrl": upload_url,
             "prompt": prompt,
-            "style": style,
-            "title": style + " " + prompt,
+            "style": self.style,
+            "title": self.style + " " + prompt,
             "customMode": True,
             "instrumental": True,
             "model": "V3_5",
             "callBackUrl": "https://api.example.com/callback"
         })
-        print(f"Prompt: {prompt}, Melody: {upload_url},")
+
         conn.request("POST", "/api/v1/generate/upload-cover", payload, self.headers)
-        response_json = conn.getresponse()
-        json_str = response_json.read()
-        data_dict = json.loads(json_str)
-        print(data_dict)
+        response = conn.getresponse()
+
+        raw = response.read().decode("utf-8")
+        print("HTTP status:", response.status)
+        print("Raw response:", raw)
+
+        if response.status != 200:
+            raise RuntimeError(f"API error {response.status}: {raw}")
+
+        data_dict = json.loads(raw)
         task_id = data_dict["data"]["taskId"]
         return task_id
+
     
 
     def poll_suno_task(self, task_id, timeout=600, interval=60):
@@ -83,22 +92,31 @@ class SunoMusicGenerator:
 
 
     def download_tracks(self, url, download_filename, file_save_path="./data/output/generated_music_suno"):
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        output_dir = os.path.join(file_save_path, timestamp)
-        os.makedirs(file_save_path, exist_ok=True)
+        """
+        Download the generated music file and save it locally as an MP3.
+        """
+        timestamp = time.strftime("%Y%m%d_")
+        output_dir = os.path.join(file_save_path, timestamp, self.style)
+        
+        # Ensure the full directory path exists (including timestamped subfolder)
+        os.makedirs(output_dir, exist_ok=True)
+
         print("Downloading track...")
         filename = os.path.join(output_dir, f"{download_filename}.mp3")
+        
         res = requests.get(url, stream=True)
         with open(filename, "wb") as f:
             for chunk in res.iter_content(chunk_size=8192):
                 f.write(chunk)
+
         print(f"Saved to {filename}")
         return filename
-    
+
 
     def run(self, prompt, style, upload_url, download_filename):
         task_id = self.generate_music(prompt, style, upload_url)
         audio_url = self.poll_suno_task(task_id)
         filename = self.download_tracks(audio_url, download_filename)
         print(f"file downloaded successfully: {filename}")
+        
         
