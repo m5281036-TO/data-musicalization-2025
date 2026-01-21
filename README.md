@@ -46,3 +46,10 @@ pip install -r requirements.txt
 ## Demonstration
 The video demonstration is available at:
 https://www.youtube.com/playlist?list=PLbWEtDW0GltB7TSJm5f7fMa86atnpNWSt
+
+## License
+The source code in this repository is released under the MIT License.
+Generated audio files are licensed separately (see below).
+
+### Audio Data
+© 2025-2026 SUNO. Licensed under CC BY 4.0.
