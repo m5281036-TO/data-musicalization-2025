@@ -1,7 +1,9 @@
 /tests/
+/.ipynb_checkpoints/
+/config/
+/data/output/
+/data/cache/
+
 
 # venv
 /data-musicalization-venv/
-/data/output/
-/data/cache/
-/src/config/
