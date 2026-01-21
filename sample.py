@@ -129,6 +129,7 @@ def main():
     print(emotion_list)
     print(len(emotion_list))
 
+    return 0
     
     # ========================================
     # create chords and melody from specified valence-arousal coordinates

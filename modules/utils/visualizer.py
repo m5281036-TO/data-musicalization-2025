@@ -59,7 +59,8 @@ class Visualizer:
         plt.plot(
             self.df1[col_timestamp_index],
             self.df1[value_index1],
-            label=f"df1: {value_index1}",
+            # label=f"Data1: {value_index1}",
+            label = f"Value1: Off the coast of Chiba",
             color="blue",
             linewidth=2
         )
@@ -67,16 +68,17 @@ class Visualizer:
         plt.plot(
             self.df2[col_timestamp_index],
             self.df2[value_index2],
-            label=f"df2: {value_index2}",
+            # label=f"Data2: {value_index2}",
+            label=f"Value2: Kobe, Hyogo",
             color="red",
             linewidth=2
         )
 
-        plt.title("Time Series Comparison (Overlapping Interval Only)")
-        plt.xlabel("Timestamp")
+        plt.title("Radiation Level in Two Different Loacation")
+        plt.xlabel("Time")
         plt.xticks(rotation=70)
         plt.tight_layout()
-        plt.ylabel("Value")
+        plt.ylabel("Radiation Level (CPM)")
         plt.grid(True)
         plt.legend(loc="best")
         plt.tight_layout()

@@ -47,5 +47,6 @@ class CrossfadeAudioFiles:
 
 
 if __name__ == "__main__":
-    fader = CrossfadeAudioFiles()
-    fader.crossfade_audio_files(input_path="./data/output/generated_music_suno/final/10")
+   for i in range(10, 11): 
+        fader = CrossfadeAudioFiles()
+        fader.crossfade_audio_files(input_path=f"./data/output/generated_music_suno/stimuli{i}")
